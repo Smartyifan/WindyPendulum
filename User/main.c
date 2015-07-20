@@ -14,15 +14,18 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x.h"
 
+
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
   */
 #include "sys/sys.h"  
 #include "delay/delay.h"
-
-#include "HC05/hc05.h"
+#include "string.h" //该头文件，定义很多字符操作
 #include "LED/led.h"
-#include "UpperMachine/upmac.h"
+#include "TIMER/timer.h"
+#include "PWM/pwm.h"
+#include "PID/PID.h"
+#include "HC05/hc05.h"
 #include "JY901/jy901.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -30,47 +33,53 @@
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
-/**
-  *@brief   SetParam		//设置参数
-  *@param   None
-  *@retval    None
-  */
-void SetParam(void){
-	/* HC05 -------------------------------------------------------*/
-	HC05.USARTBASE = USART1;		//使用串口1
-	
-	HC05.KeyBase = GPIOD_BASE;		//Key引脚
-	HC05.KeyPin = GPIO_Pin_1;
 
-	HC05.LEDBase = GPIOD_BASE;		//LED引脚
-	HC05.LEDPin = GPIO_Pin_0;
+/*--------------------------------------------------
+**PID复位，包括PID中P\I\D三个参数的设置以及偏差清零
+**无入口参数
+**无出口参数
+---------------------------------------------------*/
+void PIDReset(void)
+{
+	x_PendPID.Kp = 10;
+	x_PendPID.Ki = 0;
+	x_PendPID.Kd = 0;
+	x_PendPID.PIDout_H = 10;     //PID计算值输出限制
+	x_PendPID.PIDout_L = -10;     //PID计算值输出限制
+	PIDParamInit(&x_PendPID);
 	
-
-	/* JY901 ------------------------------------------------------*/
-	JY901.USARTBASE = USART2;		//使用串口2
+	y_PendPID.Kp = 0;
+	y_PendPID.Ki = 0;
+	y_PendPID.Kd = 0;
+	y_PendPID.PIDout_H = 10;
+	x_PendPID.PIDout_L = -10;     //PID计算值输出限制
+	PIDParamInit(&y_PendPID);
 }
 /**
   *@brief   Initial
-  *@param   None
+  *@param   None;
   *@retval  None
   */
-void Initial(void)
+void Initial()
 {
-	SetParam();
-	
 	NVIC_Configuration();	//中断分组2
 	delay_init();
     
-	LEDInit();							//LED初始化
-	if(HC05Init(&HC05) == SUCCESS){		//HC05初始化，并检测模块是否存在
-		HC05printf(&HC05,"HC05 Connected...\r\n");
-	}else {
-		HC05printf(&HC05,"HC05 Disconnected...\r\n");
-	}
-	
-	delay_ms(20);	
-	
-	JY901Init(&JY901);					//九轴姿态传感模块 JY-901 初始化
+	JTAG_Set(1);                         //关闭JTAG,开启SWD
+	LED_Init();                          //LED初始化
+	delay_ms(10);   
+	//HC05初始化，使用串口1驱动
+	HC05.USARTBASE = USART1;		
+	HC05Init(&HC05);	
+	delay_ms(10);
+	//MPU6050初始化，用串口2驱动	
+	JY901.USARTBASE = USART2;      //蓝牙陀螺仪即JY901波特率为115200时，输出速率为100HZ,波特率为9600时，输出速率为20HZ
+	JY901Init(&JY901);    
+	delay_ms(10);
+	Motor_Init();                        //电机PWM初始化，用定时器4产生PWM波
+	delay_ms(10);						
+	Timer3_Init(1999,719);                //定时器3初始化，每20ms一次中断，未使能定时器，只有当偏差计算完成时才启动定时器
+	PIDReset();                          //PID参数复位
 }
 
 /**
@@ -81,15 +90,7 @@ void Initial(void)
 int main(void)
 {
     Initial();
-    while(1)
-    {
-// 		Read_KS10X_Data(&KS103,0xb4);
-// 		while(KS103.detected != SUCCESS);
-
-// // 		HC05printf(&HC05,"Height = %d mm\r\n",KS103.Height);
-// 		SimplePlotSend(&HC05,(float)KS103.Height,0,0,0);		//画图
-// 		delay_ms(100);
-    }
+    while(1);
 }
 
 /******************* (C) COPYRIGHT 2014 STMicroelectronics *****END OF FILE****/

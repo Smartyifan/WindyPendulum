@@ -67,7 +67,7 @@
 
 
 void NVIC_Configuration(void);
-
-
+void MY_NVIC_Init(u8 NVIC_PreemptionPriority,u8 NVIC_SubPriority,u8 NVIC_Channel);
+void JTAG_Set(u8 mode);
 
 #endif
