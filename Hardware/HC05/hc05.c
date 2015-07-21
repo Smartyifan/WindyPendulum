@@ -258,7 +258,7 @@ void HC05RxNVICInit(USART_TypeDef * USARTBASE){
 	/* NVIC初始化 -------------------------------------------------------------*/
 	NVIC_InitStructure.NVIC_IRQChannel = IRQChannel;
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;		//抢占优先级1
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0; 				//子优先级0
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2; 				//子优先级0
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;					//使能中断号
 	NVIC_Init(&NVIC_InitStructure);									//初始化NVIC
 }

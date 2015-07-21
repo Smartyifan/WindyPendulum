@@ -27,7 +27,7 @@
 /* Private variables ---------------------------------------------------------*/
 PIDStruct x_PendPID,y_PendPID;		//摆杆PID控制结构体
 /* Private function prototypes -----------------------------------------------*/
-void PIDGetError(PIDStruct * PID,double error);
+void PIDGetError(PIDStruct * PID,float error);
 /* Private functions ---------------------------------------------------------*/
 /**
   *@brief   PIDCalculatre
@@ -49,8 +49,8 @@ void PIDParamInit(PIDStruct * PID){
   *@param   PIDStruct * PID	指向PID结构体的指针
   *@retval  None
   */
-extern double abs(double __x); //不加该声明语句使用abs时会出现警告
-void PIDCalculater(PIDStruct * PID,double error){  
+// extern double abs(double __x); //不加该声明语句使用abs时会出现警告
+void PIDCalculater(PIDStruct * PID,float error){  
 	
 	/* 得到偏差量 -----------------------------------------------------*/
     PIDGetError(PID,error);		//获得偏差并更新偏差量数组
@@ -59,10 +59,10 @@ void PIDCalculater(PIDStruct * PID,double error){
     PID->Iout = PID->Ki* PID->error[0];						//计算Iout
     PID->Dout = PID->Kd*(PID->error[0] + PID->error[2] -2*PID->error[1]);	//计算Dout
 	//下面PID输出的写法是不是有问题？
-    PID->PIDout = PID->Pout + PID->Iout + PID->Dout;		//得到PIDout
+    PID->PIDout += PID->Pout + PID->Iout + PID->Dout;		//得到PIDout
     /* 高低阈值限制 --------------------------------------------------*/
-	if(PID->PIDout > PID->PIDout_H)PID->PIDout = PID->PIDout_H;		//PIDout最高值限制
-	if(PID->PIDout < PID->PIDout_L)PID->PIDout = PID->PIDout_L;		//PIDout最高值限制
+// 	if(PID->PIDout > PID->PIDout_H)PID->PIDout = PID->PIDout_H;		//PIDout最高值限制
+// 	if(PID->PIDout < PID->PIDout_L)PID->PIDout = PID->PIDout_L;		//PIDout最高值限制
 }
 
 /**
@@ -71,7 +71,7 @@ void PIDCalculater(PIDStruct * PID,double error){
   *			double error	当前偏差量			
   *@retval  None
   */
-void PIDGetError(PIDStruct * PID,double error){
+void PIDGetError(PIDStruct * PID,float error){
 	PID->error[2] = PID->error[1];	//数组移位
 	PID->error[1] = PID->error[0];
     PID->error[0] = error;

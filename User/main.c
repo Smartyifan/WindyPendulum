@@ -52,16 +52,16 @@ void ParamSet(){
 	x_PendPID.Kp = 10;			//Kp	
 	x_PendPID.Ki = 0;			//Ki
 	x_PendPID.Kd = 0;			//Kd
-	x_PendPID.PIDout_H = 10;    //PID计算值输出限制
-	x_PendPID.PIDout_L = -10;   //PID计算值输出限制
+// 	x_PendPID.PIDout_H = 10;    //PID计算值输出限制
+// 	x_PendPID.PIDout_L = -10;   //PID计算值输出限制
 	PIDParamInit(&x_PendPID);	//清空输出
 
 	/* y_PendPID ---------------------------------*/
 	y_PendPID.Kp = 0;
 	y_PendPID.Ki = 0;
 	y_PendPID.Kd = 0;
-	y_PendPID.PIDout_H = 10;
-	x_PendPID.PIDout_L = -10;     //PID计算值输出限制
+// 	y_PendPID.PIDout_H = 10;
+// 	y_PendPID.PIDout_L = -10;     //PID计算值输出限制
 	PIDParamInit(&y_PendPID);
 }
 /**
@@ -79,7 +79,7 @@ void Initial()
 	delay_init();
     
 	/* SWD初始化 ---------------------------------------*/
-// 	JTAG_Set(1);                         //关闭JTAG,开启SWD
+	JTAG_Set(1);                         //关闭JTAG,开启SWD
 
 	/* 三色LED初始化 -----------------------------------*/
 	LED_Init();                      
@@ -95,11 +95,12 @@ void Initial()
 	delay_ms(10);
 	
 	/* 电机PID初始化 ------------------------------------*/
-	Motor_Init();           //电机PWM初始化，用定时器4产生PWM波
+// 	Motor_Init();           //电机PWM初始化，用定时器4产生PWM波
 	delay_ms(10);						
 	
 	/* 定时器中断初始化 ---------------------------------*/
-	Timer3_Init(1999,719);	//定时器3初始化，每20ms一次中断，未使能定时器，只有当偏差计算完成时才启动定时器
+	//用于定时查看PIDout，使用HC-05发送至XJI魔幻上位机画图
+// 	Timer3_Init(5000,720);	//定时器3初始化 T = (720*5000)/72 000 000 = 50 ms
 }
 
 /**

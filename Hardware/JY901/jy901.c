@@ -71,9 +71,10 @@ void JY901Init(JY901Str * JY901){
 
 
 /**
-  *@brief   
-  *@param   None
-  *@retval    None
+  *@brief   	USART2_IRQHandler	串口2中断函数，用于检测MPU6050数据包头 0x55 0x51
+  *@param   	None
+  *@retval  	None
+  *@attention	抢占优先级 0 子优先级 1
   */
 void USART2_IRQHandler(void){
 	static u8 FH[2];		//帧头数组
@@ -94,9 +95,16 @@ void USART2_IRQHandler(void){
 	}	
 }
 
-void DMA1_Channel6_IRQHandler(){
+/**
+  *@brief   	DMA1_Channel6_IRQHandler  DMA通道6中断函数，用于读MPU6050之后进行相关处理
+  *@param   	None
+  *@retval    	None
+  *@attention 	执行时间 46.14us（完成零漂检测之后）		测量工具:ST-Link_V2
+				抢占优先级 1 子优先级 0
+  */
+void DMA1_Channel6_IRQHandler(void){
 	/* 定义x,y角度的偏差量--------------------------------------------------------------------*/
-	double x_CurrentError,y_CurrentError;      //目标值减去实际角度值（已减去零漂）
+	float x_CurrentError,y_CurrentError;      //目标值减去实际角度值（已减去零漂）
 	static u16 i=0;     
 	static float RolZeroDirftAll=0,PitchZeroDirftAll=0;//零漂累计变量
 	static unsigned char CuledFlag=0;//零漂是否计算完成的标志
@@ -144,25 +152,34 @@ void DMA1_Channel6_IRQHandler(){
 			}
 			i++;
 		}
+		
 		/* PID控制-----------------------------------------------------------------------*/
 		else if(CuledFlag == 1)  //只有当计算偏差计算完成时才启动PID控制
 		{
 			//由硬件仿真可知，PID计算频率大概为57Hz
 			//x_CurrentError =  目标值  -  当前实际值 - 零漂
-			x_CurrentError = x_TargetAngle - JY901.AngCuled.RolCuled - JY901.ZeroDirft.RolZeroDirft;
-			y_CurrentError = y_TargetAngle - JY901.AngCuled.PitchCuled - JY901.ZeroDirft.PitchZeroDirft;
+			/* 得到偏差角度 --------------------------------------------------------------*/
+			x_CurrentError = x_TargetAngle - JY901.AngCuled.RolCuled + JY901.ZeroDirft.RolZeroDirft;
+			y_CurrentError = y_TargetAngle - JY901.AngCuled.PitchCuled + JY901.ZeroDirft.PitchZeroDirft;
+			
+			/* 计算PIDoout --------------------------------------------------------------*/
 			PIDCalculater(&x_PendPID,x_CurrentError);
 			PIDCalculater(&y_PendPID,y_CurrentError);
+
+			/* 在XJI上位机画出数据图形 ----------------------------------------------------*/
+			SimplePlotSend(&HC05,(float)x_PendPID.PIDout,x_CurrentError,0,0);		//执行时间 7.92us ≈ 8us
+			
+			/* 将PIDout输出至TIM4控制电机 -------------------------------------------------*/
 			PIDControl();		
 		}
 		
-		/* 后续处理 ------------------------------------------------------------------------*/
+		
+		/* 后续处理 ----------------------------------------------------------------------*/
 		USART_ITConfig(JY901.USARTBASE,USART_IT_RXNE,ENABLE);	//打开串口接收中断
 
 		JY901.DMAChannelRx->CCR&=~1;      		//关闭DMA传输 
 
 		DMA_ClearITPendingBit(DMA1_IT_GL6);
-		
 	}
 	
 }
@@ -355,7 +372,7 @@ void DMATCNVICInit(DMA_Channel_TypeDef * DMAChannelRx){
 	/* NVIC初始化 -------------------------------------------------------------*/
 	NVIC_InitStructure.NVIC_IRQChannel = IRQChannel;
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;		//抢占优先级1
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2; 				//子优先级2
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0; 				//子优先级2
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;					//使能中断号
 	NVIC_Init(&NVIC_InitStructure);									//初始化NVIC
 }
