@@ -138,12 +138,18 @@ _ _ _
 #### 分支说明  
 	发布待稳定版本的分支  
 #### 版本号目录  
-[8876d89](#8876d89dev)  
 [a9aa0b6](#a9aa0b6dev)  
+[8876d89](#8876d89dev)  
+
 
 
 _ _ _
-
+#### <a name = "fd86bc4dev" />fd86bc4--Merge branch 'checkPIDout' into dev  
+**July 21, 2015 11:22 AM**
+	修复PID的一些Bug
+1.零漂前的符号改为+号。
+2.PIDout改为自加之前的值。
+3.修改PIDout对于电机的编号
 
 #### <a name = "a9aa0b6dev" />a9aa0b6--compile whole project of PID control   
 **July 21, 2015 11:15 AM**
