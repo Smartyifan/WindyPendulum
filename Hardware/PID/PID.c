@@ -74,7 +74,7 @@ void PIDCalculater(PIDStruct * PID,float error){
 }
 
 /**
-  *@brief   PIDGetError
+  *@brief   PIDGetError		
   *@param   PIDStruct * PID	指向PID结构体的指针
   *			double error	当前偏差量			
   *@retval  None
@@ -90,25 +90,15 @@ void PIDGetError(PIDStruct * PID,float error){
   *@param   PIDStruct * PID	指向PID结构体的指针	
   *@retval  None
   */
-/*----------------------------------
-**由于我们的陀螺仪采用的是X型贴法，故每个电机控制需要两个PIDout即
-**x_PIDout,y_PIDout
-----------------------------------*/
+
 s16 motor1=0,motor2=0,motor3=0,motor4=0;
 void PIDControl(void){
-	
-//	u16 motor1=0,motor2=0,motor3=0,motor4=0;
 	//计算每个电机的PWM变化是升高还是降低//代码移植时要改动
 	motor1 = TIM4->CCR1 +((s16)(y_PendPID.PIDout));
 	motor2 = TIM4->CCR2 +((s16)(x_PendPID.PIDout));
 	motor3 = TIM4->CCR3 -((s16)(y_PendPID.PIDout));
 	motor4 = TIM4->CCR4 -((s16)(x_PendPID.PIDout));
-// 	SimplePlotSend(&HC05,(float)motor4,0,0,0);		//执行时间 7.92us ≈ 8us
 
-//	motor1=6000;
-//	motor2=0;
-//	motor3=0;
-//	motor4=0;
 	PWM_SET(motor1,motor2,motor3,motor4);
 }
 

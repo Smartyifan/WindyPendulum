@@ -76,7 +76,7 @@ void JY901Init(JY901Str * JY901){
 
 
 /**
-  *@brief   	USART2_IRQHandler	串口2中断函数，用于检测MPU6050数据包头 0x55 0x51
+  *@brief   	USART2_IRQHandler	串口2中断函数，用于检测JY901数据包头 0x55 0x51
   *@param   	None
   *@retval  	None
   *@attention	抢占优先级 0 子优先级 1
@@ -115,11 +115,17 @@ void DMA1_Channel6_IRQHandler(void){
 	static float RolZeroDirftAll=0,PitchZeroDirftAll=0;//零漂累计变量
 		
 	
-	if(DMA_GetITStatus(DMA1_IT_TC6) == SET){		
+	if(DMA_GetITStatus(DMA1_IT_TC6) == SET){	
+
+		/* Use JY-901 ----------------------------------------------------------------------*/
+		memcpy(&(JY901.Ax),&JY901.RxData[1],8);		//加速度
+		memcpy(&(JY901.Wx),&JY901.RxData[12],6);	//角速度
+		memcpy(&(JY901.Ang),&JY901.RxData[23],6);	//角度	
+		
 		/* Use MPU6050 ---------------------------------------------------------------------*/
 // 		memcpy(&(JY901.Ax),&JY901.RxData[1],6);		//加速度
 // 		memcpy(&(JY901.Wx),&JY901.RxData[12],6);	//角速度	
-		memcpy(&(JY901.Ang),&JY901.RxData[23],6);	//角度
+// 		memcpy(&(JY901.Ang),&JY901.RxData[23],6);	//角度
 		/* 显示角度 ------------------------------------------------------------------------*/
 
 		/* 带条件的角度转换-----------------------------------------------------------------------*/
@@ -148,13 +154,18 @@ void DMA1_Channel6_IRQHandler(void){
 				G_LED=0;            
 				delay_ms(100);
 				G_LED=1;
+				/* 打印零漂数字 -----------------------------------------------------------------------------------*/
+				HC05printf(&HC05,"Calculate Success ...\r\nRolZeroDirft = %f\r\nPitchZeroDirft = %f\r\n",
+													JY901.ZeroDirft.RolZeroDirft,	JY901.ZeroDirft.PitchZeroDirft);
+				/* -----------------------------------------------------------------------------------------------*/
+
 			}
 			else 
 			{
 				if (i == 0)      //清零偏差值
 				{
-					JY901.ZeroDirft.RolZeroDirft=0;
-					JY901.ZeroDirft.PitchZeroDirft=0;
+					RolZeroDirftAll = 0;
+					PitchZeroDirftAll =0;
 				}
 				RolZeroDirftAll += JY901.AngCuled.RolCuled;
 				PitchZeroDirftAll += JY901.AngCuled.PitchCuled;					
@@ -179,10 +190,9 @@ void DMA1_Channel6_IRQHandler(void){
 			PIDControl();		
 
 			/* 在XJI上位机画出数据图形 ----------------------------------------------------*/
- 			SimplePlotSend(&HC05,JY901.AngCuled.RolCuled,x_CurrentError,(float)TIM4->CCR2/480,0);		//执行时间 7.92us ≈ 8us
+ 			SimplePlotSend(&HC05,JY901.AngCuled.RolCuled,x_CurrentError,0,0);		//执行时间 7.92us ≈ 8us
 			
 		}
-		
 		
 		/* 后续处理 ----------------------------------------------------------------------*/
 		USART_ITConfig(JY901.USARTBASE,USART_IT_RXNE,ENABLE);	//打开串口接收中断
@@ -387,14 +397,4 @@ void DMATCNVICInit(DMA_Channel_TypeDef * DMAChannelRx){
 	NVIC_Init(&NVIC_InitStructure);									//初始化NVIC
 }
 
-
-/**
-  *@brief   CulZeroDirft
-  *@param   None
-  *@retval  None
-  */
-void CulZeroDirft(void)
-{
-	
-}
 /******************* (C) COPYRIGHT 2014 STMicroelectronics *****END OF FILE****/
