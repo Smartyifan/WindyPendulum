@@ -15,7 +15,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include <stm32f10x.h>
 #include <string.h>
-#include <math.h>
+#include <stdlib.h>
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
   */
@@ -113,9 +113,7 @@ void DMA1_Channel6_IRQHandler(void){
 	float x_CurrentError,y_CurrentError;      //目标值减去实际角度值（已减去零漂）
    
 	static float RolZeroDirftAll=0,PitchZeroDirftAll=0;//零漂累计变量
-	
-	float LastRol=0,LastPitch=0;
-	
+		
 	
 	if(DMA_GetITStatus(DMA1_IT_TC6) == SET){		
 		/* Use MPU6050 ---------------------------------------------------------------------*/
@@ -123,18 +121,11 @@ void DMA1_Channel6_IRQHandler(void){
 // 		memcpy(&(JY901.Wx),&JY901.RxData[12],6);	//角速度	
 		memcpy(&(JY901.Ang),&JY901.RxData[23],6);	//角度
 		/* 显示角度 ------------------------------------------------------------------------*/
-//		HC05printf(&HC05,"Ang\r\nRow=%f  Pitch=%f  Yaw=%f\r\n",(float)JY901.Ang.Rol/32768*180,(float)JY901.Ang.Pitch/32768*180,(float)JY901.Ang.Yaw/32768*180);
-//		SimplePlotSend(&HC05,(float)JY901.Ang.Rol/32768*180,(float)JY901.Ang.Pitch/32768*180,(float)JY901.Ang.Yaw/32768*180,0);
-		/* 角度转换之前记录上次记录的值-----------------------------------------------------------------------*/
-		LastRol = JY901.AngCuled.RolCuled;
-		LastPitch = JY901.AngCuled.PitchCuled;
-		/* 角度转换-----------------------------------------------------------------------*/
-		JY901.AngCuled.RolCuled = (float)JY901.Ang.Rol/32768*180;
-		JY901.AngCuled.PitchCuled = (float)JY901.Ang.Pitch/32768*180; 
-		//|| (JY901.AngCuled.RolCuled > -1.5 && JY901.AngCuled.RolCuled < 0)
-		//|| (JY901.AngCuled.PitchCuled > -1.5 && JY901.AngCuled.RolCuled < 0)
-		if((JY901.AngCuled.RolCuled < 1.5 && JY901.AngCuled.RolCuled > 0) )	JY901.AngCuled.RolCuled = LastRol;
-		if((JY901.AngCuled.PitchCuled < 1.5 && JY901.AngCuled.RolCuled > 0))  JY901.AngCuled.RolCuled = LastPitch;
+
+		/* 带条件的角度转换-----------------------------------------------------------------------*/
+		if(abs(JY901.Ang.Rol) > 273 && abs(JY901.Ang.Rol <13653))		JY901.AngCuled.RolCuled = (float)JY901.Ang.Rol/32768*180;
+		if(abs(JY901.Ang.Pitch) > 273 && abs(JY901.Ang.Pitch <13653)) 	JY901.AngCuled.PitchCuled = (float)JY901.Ang.Pitch/32768*180; 
+
 		/* 零漂计算-----------------------------------------------------------------------*/
 		/*CuledFlag为0时偏差未计算完成，为1时表示偏差计算完成*/
 		if(DetectZeroDrift == ENABLE) 
