@@ -76,7 +76,7 @@ void JY901Init(JY901Str * JY901){
 
 
 /**
-  *@brief   	USART2_IRQHandler	串口2中断函数，用于检测MPU6050数据包头 0x55 0x51
+  *@brief   	USART2_IRQHandler	串口2中断函数，用于检测JY901数据包头 0x55 0x51
   *@param   	None
   *@retval  	None
   *@attention	抢占优先级 0 子优先级 1
@@ -115,11 +115,17 @@ void DMA1_Channel6_IRQHandler(void){
 	static float RolZeroDirftAll=0,PitchZeroDirftAll=0;//零漂累计变量
 		
 	
-	if(DMA_GetITStatus(DMA1_IT_TC6) == SET){		
+	if(DMA_GetITStatus(DMA1_IT_TC6) == SET){	
+
+		/* Use JY-901 ----------------------------------------------------------------------*/
+		memcpy(&(JY901.Ax),&JY901.RxData[1],8);		//加速度
+		memcpy(&(JY901.Wx),&JY901.RxData[12],6);	//角速度
+		memcpy(&(JY901.Ang),&JY901.RxData[23],6);	//角度	
+		
 		/* Use MPU6050 ---------------------------------------------------------------------*/
 // 		memcpy(&(JY901.Ax),&JY901.RxData[1],6);		//加速度
 // 		memcpy(&(JY901.Wx),&JY901.RxData[12],6);	//角速度	
-		memcpy(&(JY901.Ang),&JY901.RxData[23],6);	//角度
+// 		memcpy(&(JY901.Ang),&JY901.RxData[23],6);	//角度
 		/* 显示角度 ------------------------------------------------------------------------*/
 
 		/* 带条件的角度转换-----------------------------------------------------------------------*/
@@ -387,14 +393,4 @@ void DMATCNVICInit(DMA_Channel_TypeDef * DMAChannelRx){
 	NVIC_Init(&NVIC_InitStructure);									//初始化NVIC
 }
 
-
-/**
-  *@brief   CulZeroDirft
-  *@param   None
-  *@retval  None
-  */
-void CulZeroDirft(void)
-{
-	
-}
 /******************* (C) COPYRIGHT 2014 STMicroelectronics *****END OF FILE****/
