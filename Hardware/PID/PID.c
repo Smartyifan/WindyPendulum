@@ -21,6 +21,9 @@
 #include "PID/PID.h"
 #include "usart/usart.h"
 #include "PWM/pwm.h"
+#include "HC05/hc05.h"
+#include "UpperMachine/upmac.h"
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -52,11 +55,16 @@ void PIDParamInit(PIDStruct * PID){
 // extern double abs(double __x); //不加该声明语句使用abs时会出现警告
 void PIDCalculater(PIDStruct * PID,float error){  
 	
-	/* 得到偏差量 -----------------------------------------------------*/
+	/* 得到偏差量 ----------------------------------------------------*/
     PIDGetError(PID,error);		//获得偏差并更新偏差量数组
-	/* 计算PID输出 ----------------------------------------------------*/
+	/* 计算PID输出 ---------------------------------------------------*/
     PID->Pout = PID->Kp*(PID->error[0] - PID->error[1]);	//计算Pout
-    PID->Iout = PID->Ki* PID->error[0];						//计算Iout
+	
+	/* 分离积分 ------------------------------------------------------*/
+	if((PID->error[0] > -0.5)  &&  (PID->error[0] < 0.5)){
+		PID->Iout = PID->Ki* PID->error[0];						//计算Iout
+	}
+	
     PID->Dout = PID->Kd*(PID->error[0] + PID->error[2] -2*PID->error[1]);	//计算Dout
 	//下面PID输出的写法是不是有问题？
     PID->PIDout += PID->Pout + PID->Iout + PID->Dout;		//得到PIDout
@@ -91,10 +99,12 @@ void PIDControl(void){
 	
 //	u16 motor1=0,motor2=0,motor3=0,motor4=0;
 	//计算每个电机的PWM变化是升高还是降低//代码移植时要改动
-	motor1 = TIM4->CCR1 +((s16)(x_PendPID.PIDout));
-	motor2 = TIM4->CCR2 +((s16)(y_PendPID.PIDout));
-	motor3 = TIM4->CCR3 -((s16)(x_PendPID.PIDout));
-	motor4 = TIM4->CCR4 -((s16)(y_PendPID.PIDout));
+	motor1 = TIM4->CCR1 +((s16)(y_PendPID.PIDout));
+	motor2 = TIM4->CCR2 +((s16)(x_PendPID.PIDout));
+	motor3 = TIM4->CCR3 -((s16)(y_PendPID.PIDout));
+	motor4 = TIM4->CCR4 -((s16)(x_PendPID.PIDout));
+// 	SimplePlotSend(&HC05,(float)motor4,0,0,0);		//执行时间 7.92us ≈ 8us
+
 //	motor1=6000;
 //	motor2=0;
 //	motor3=0;
