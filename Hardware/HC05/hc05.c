@@ -33,6 +33,9 @@
 #include "LED/led.h"
 #include "PWM/pwm.h"
 #include "TIMER/timer.h"
+#include "UpperMachine/upmac.h"
+#include "JY901/jy901.h"
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -53,7 +56,7 @@ void HC05GPIOInit(HC05Str * HC05);								//GPIO初始化
   *@retval  None
   */
 ErrorStatus HC05Init(HC05Str * HC05){
-	u8 timeout = 10,wait;		//检查超时
+// 	u8 timeout = 10,wait;		//检查超时
 	
 	HC05->Checked = ERROR;		//检查HC05模块成功标志
 	/* 确认DMA通道号 ---------------------------------------------------------------------------------------------*/
@@ -118,13 +121,9 @@ void USART1_IRQHandler(){
 		HC05.RxLen = HC05RxLen - DMA_GetCurrDataCounter(DMA1_Channel5);			//计算接收到的长度
 		
 		//接收数据处理
-//		HC05.TxData[0] = HC05.RxData[0];
-//		UARTxDMASend(&HC05,1);
-		//在此处接收目标角度值
-		if(HC05.RxData[0] == '1')   {B_LED=0;Motor_Stop();}
-		if(HC05.RxData[0] == '2')   {B_LED=1;Motor_Stop();}
-//		if(HC05.RxLen == 4 && HC05.RxData[0] == 'O' && HC05.RxData[1] == 'K')	//接收到'OK\r\n'
-//			HC05.Checked = SUCCESS;												//检测到HC-05	
+		DetectCmd();
+		
+		//HC05.Checked = SUCCESS;												//检测到HC-05	
 		
 		DMA_SetCurrDataCounter(DMA1_Channel5,HC05RxLen);		//再次设置接收长度
 		DMA_Cmd(DMA1_Channel5,ENABLE); 							//使能串口5的接收DMA通道
@@ -196,7 +195,7 @@ void HC05GPIOInit(HC05Str * HC05){
 void HC05DMAInit(HC05Str * HC05){
 	DMA_InitTypeDef DMA_InitStructure;
 	
-	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);	//使能DMA传输
+	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);	//使能DMA1时钟
 	delay_us(5);
 
 	#if HC05TxDMA								//若使能TxDMA传输	

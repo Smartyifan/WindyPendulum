@@ -15,6 +15,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include <stm32f10x.h>
 #include <string.h>
+#include <math.h>
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
   */
@@ -32,6 +33,10 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 JY901Str JY901;
+FunctionalState DetectZeroDrift = DISABLE;	//启动检测零漂
+ErrorStatus DriftDetected = ERROR;			//零漂检测完成
+FunctionalState MotorStart = DISABLE;       //电机启动与否
+
 /* Private function prototypes -----------------------------------------------*/
 void UARTRxDMARec(JY901Str * JY901);							//开启一次DMA接收
 void JY901UartInit(USART_TypeDef * USARTBASE,u32 BaudRate);		//串口初始化
@@ -102,37 +107,50 @@ void USART2_IRQHandler(void){
   *@attention 	执行时间 46.14us（完成零漂检测之后）		测量工具:ST-Link_V2
 				抢占优先级 1 子优先级 0
   */
+u16 i=0;  
 void DMA1_Channel6_IRQHandler(void){
 	/* 定义x,y角度的偏差量--------------------------------------------------------------------*/
 	float x_CurrentError,y_CurrentError;      //目标值减去实际角度值（已减去零漂）
-	static u16 i=0;     
+   
 	static float RolZeroDirftAll=0,PitchZeroDirftAll=0;//零漂累计变量
-	static unsigned char CuledFlag=0;//零漂是否计算完成的标志
+	
+	float LastRol=0,LastPitch=0;
 	
 	
 	if(DMA_GetITStatus(DMA1_IT_TC6) == SET){		
 		/* Use MPU6050 ---------------------------------------------------------------------*/
-		memcpy(&(JY901.Ax),&JY901.RxData[1],6);		//加速度
-		memcpy(&(JY901.Wx),&JY901.RxData[12],6);	//角速度	
+// 		memcpy(&(JY901.Ax),&JY901.RxData[1],6);		//加速度
+// 		memcpy(&(JY901.Wx),&JY901.RxData[12],6);	//角速度	
 		memcpy(&(JY901.Ang),&JY901.RxData[23],6);	//角度
 		/* 显示角度 ------------------------------------------------------------------------*/
 //		HC05printf(&HC05,"Ang\r\nRow=%f  Pitch=%f  Yaw=%f\r\n",(float)JY901.Ang.Rol/32768*180,(float)JY901.Ang.Pitch/32768*180,(float)JY901.Ang.Yaw/32768*180);
 //		SimplePlotSend(&HC05,(float)JY901.Ang.Rol/32768*180,(float)JY901.Ang.Pitch/32768*180,(float)JY901.Ang.Yaw/32768*180,0);
-		
+		/* 角度转换之前记录上次记录的值-----------------------------------------------------------------------*/
+		LastRol = JY901.AngCuled.RolCuled;
+		LastPitch = JY901.AngCuled.PitchCuled;
 		/* 角度转换-----------------------------------------------------------------------*/
 		JY901.AngCuled.RolCuled = (float)JY901.Ang.Rol/32768*180;
-		JY901.AngCuled.PitchCuled = (float)JY901.Ang.Pitch/32768*180;
-		
+		JY901.AngCuled.PitchCuled = (float)JY901.Ang.Pitch/32768*180; 
+		//|| (JY901.AngCuled.RolCuled > -1.5 && JY901.AngCuled.RolCuled < 0)
+		//|| (JY901.AngCuled.PitchCuled > -1.5 && JY901.AngCuled.RolCuled < 0)
+		if((JY901.AngCuled.RolCuled < 1.5 && JY901.AngCuled.RolCuled > 0) )	JY901.AngCuled.RolCuled = LastRol;
+		if((JY901.AngCuled.PitchCuled < 1.5 && JY901.AngCuled.RolCuled > 0))  JY901.AngCuled.RolCuled = LastPitch;
 		/* 零漂计算-----------------------------------------------------------------------*/
 		/*CuledFlag为0时偏差未计算完成，为1时表示偏差计算完成*/
-		if(CuledFlag == 0) 
+		if(DetectZeroDrift == ENABLE) 
 		{
 			if(i == ZeroDirftCulNum) //计算偏差值值
 			{
+				/* 计算零漂 ------------------------------------------------------*/
 				JY901.ZeroDirft.RolZeroDirft = RolZeroDirftAll/ZeroDirftCulNum;
 				JY901.ZeroDirft.PitchZeroDirft = PitchZeroDirftAll/ZeroDirftCulNum;
-				CuledFlag = 1;
-				G_LED=0;            //表示初始化计算完成，LED绿灯快速闪烁2下
+				
+				/* 设置标志位 -----------------------------------------------------*/
+				DetectZeroDrift = DISABLE;		//不检测零漂
+				DriftDetected = SUCCESS;		//零漂检测完成
+				
+				/* 绿色LED闪烁 ----------------------------------------------------*/
+				G_LED=0;            			//表示初始化计算完成，LED绿灯快速闪烁2下
 				delay_ms(100);
 				G_LED=1;
 				delay_ms(100);
@@ -154,9 +172,9 @@ void DMA1_Channel6_IRQHandler(void){
 		}
 		
 		/* PID控制-----------------------------------------------------------------------*/
-		else if(CuledFlag == 1)  //只有当计算偏差计算完成时才启动PID控制
+		else if(DetectZeroDrift == DISABLE && DriftDetected == SUCCESS && MotorStart == ENABLE)  //只有当计算偏差计算完成时才启动PID控制
 		{
-			//由硬件仿真可知，PID计算频率大概为57Hz
+			//由硬件仿真可知，PID计算频率大概为51Hz
 			//x_CurrentError =  目标值  -  当前实际值 - 零漂
 			/* 得到偏差角度 --------------------------------------------------------------*/
 			x_CurrentError = x_TargetAngle - JY901.AngCuled.RolCuled + JY901.ZeroDirft.RolZeroDirft;
@@ -165,12 +183,13 @@ void DMA1_Channel6_IRQHandler(void){
 			/* 计算PIDoout --------------------------------------------------------------*/
 			PIDCalculater(&x_PendPID,x_CurrentError);
 			PIDCalculater(&y_PendPID,y_CurrentError);
-
-			/* 在XJI上位机画出数据图形 ----------------------------------------------------*/
-			SimplePlotSend(&HC05,(float)x_PendPID.PIDout,x_CurrentError,0,0);		//执行时间 7.92us ≈ 8us
 			
 			/* 将PIDout输出至TIM4控制电机 -------------------------------------------------*/
 			PIDControl();		
+
+			/* 在XJI上位机画出数据图形 ----------------------------------------------------*/
+ 			SimplePlotSend(&HC05,JY901.AngCuled.RolCuled,x_CurrentError,(float)TIM4->CCR2/480,0);		//执行时间 7.92us ≈ 8us
+			
 		}
 		
 		

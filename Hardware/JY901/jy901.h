@@ -21,7 +21,8 @@
 #define RxDataNum	5			//要接受的数据帧数
 #define JY901TxLen  5			//发送一个指令的字节数
 #define JY901RxLen  10+11*(RxDataNum-1)	//接收数据长度
-#define ZeroDirftCulNum   300   //计算零漂采样数目
+#define ZeroDirftCulNum   300   	//计算零漂采样数目
+
 /* TypeDefine ----------------------------------------------------------------*/
 typedef struct{
 	USART_TypeDef * USARTBASE;
@@ -63,6 +64,10 @@ typedef struct{
 } JY901Str;
 /* extern Variables ----------------------------------------------------------*/
 extern JY901Str JY901;
+extern FunctionalState DetectZeroDrift;	//启动检测零漂
+extern ErrorStatus DriftDetected;		//零漂检测完成
+extern FunctionalState MotorStart;       //电机启动与否
+extern u16 i; 
 /* extern function------------------------------------------------------------*/
 extern void JY901Init(JY901Str * JY901);
 		 				    

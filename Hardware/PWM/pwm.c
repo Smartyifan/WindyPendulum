@@ -2,6 +2,7 @@
 #include "sys/sys.h"
 #include "delay/delay.h"
 #include "usart/usart.h"
+#include "HC05/hc05.h"
 //psc=8
 //arr=999
 //f=72MHz/((59999+1)*(17+1))=50Hz
@@ -38,7 +39,7 @@ void Timer4_PWM_Init(u16 arr,u16 psc)
 	TIM4->CCMR2 |= 6<<12;
 	TIM4->CCMR2 |= 1<<11;
 	
-	TIM4->CCER |= 1<<0;			//使能Timer2 PWM输出
+	TIM4->CCER |= 1<<0;			//使能Timer4 PWM输出
 	TIM4->CCER |= 1<<4;
 	TIM4->CCER |= 1<<8;
 	TIM4->CCER |= 1<<12;
@@ -49,7 +50,7 @@ void Timer4_PWM_Init(u16 arr,u16 psc)
 	TIM4->CCR4 = ALLCH_CRR-1;
 	
 	TIM4->CR1 = 0x0080;			//使能ARR重装载
-	TIM4->CR1 |= 1<<0;			//使能定时器
+// 	TIM4->CR1 |= 1<<0;			//使能定时器
 }
 
 void PWM_SET(s16 CH1_CCR,s16 CH2_CCR,s16 CH3_CCR,s16 CH4_CCR)
@@ -71,25 +72,20 @@ void PWM_SET(s16 CH1_CCR,s16 CH2_CCR,s16 CH3_CCR,s16 CH4_CCR)
 	TIM4->CCR3 = CH3_CCR-1;
 	TIM4->CCR4 = CH4_CCR-1;
 	
+// 	HC05printf(&HC05,"%d    %d\r\n",TIM4->CCR4,CH4_CCR);
 
 	TIM4->CR1|=0x0001;   //打开定时器4，开始输出PWM波
-
 }
 
-
-void Motor_Start_Up(void)
-{
-	PWM_SET(0,0,0,0);
-}
 
 void Motor_Init(void)
 {
 	Timer4_PWM_Init(4800,1); //空心杯电机的一般驱动频率为10K-20K,故取15KHz
-	Motor_Start_Up();
+// 	Motor_Start_Up();
+	TIM4->CCR1 = 1;		//设置占空比ZKB
+	TIM4->CCR2 = 1;
+	TIM4->CCR3 = 1;
+	TIM4->CCR4 = 1;
 }
 
-void Motor_Stop(void)
-{
-	TIM4->CR1&=~(1<<0);        //关闭定时器4
-}
 
