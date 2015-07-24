@@ -154,13 +154,18 @@ void DMA1_Channel6_IRQHandler(void){
 				G_LED=0;            
 				delay_ms(100);
 				G_LED=1;
+				/* 打印零漂数字 -----------------------------------------------------------------------------------*/
+				HC05printf(&HC05,"Calculate Success ...\r\nRolZeroDirft = %f\r\nPitchZeroDirft = %f\r\n",
+													JY901.ZeroDirft.RolZeroDirft,	JY901.ZeroDirft.PitchZeroDirft);
+				/* -----------------------------------------------------------------------------------------------*/
+
 			}
 			else 
 			{
 				if (i == 0)      //清零偏差值
 				{
-					JY901.ZeroDirft.RolZeroDirft=0;
-					JY901.ZeroDirft.PitchZeroDirft=0;
+					RolZeroDirftAll = 0;
+					PitchZeroDirftAll =0;
 				}
 				RolZeroDirftAll += JY901.AngCuled.RolCuled;
 				PitchZeroDirftAll += JY901.AngCuled.PitchCuled;					
@@ -185,10 +190,9 @@ void DMA1_Channel6_IRQHandler(void){
 			PIDControl();		
 
 			/* 在XJI上位机画出数据图形 ----------------------------------------------------*/
- 			SimplePlotSend(&HC05,JY901.AngCuled.RolCuled,x_CurrentError,(float)TIM4->CCR2/480,0);		//执行时间 7.92us ≈ 8us
+ 			SimplePlotSend(&HC05,JY901.AngCuled.RolCuled,x_CurrentError,0,0);		//执行时间 7.92us ≈ 8us
 			
 		}
-		
 		
 		/* 后续处理 ----------------------------------------------------------------------*/
 		USART_ITConfig(JY901.USARTBASE,USART_IT_RXNE,ENABLE);	//打开串口接收中断
