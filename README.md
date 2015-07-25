@@ -151,7 +151,7 @@ _ _ _
 
 #### <a name = "33f75addev" /> 33f75ad --UseJY901  
 **July 24, 2015 20:02 PM**  
-	由于MPU6050模块输出数据在电机转速大时极不稳定，取消MPU6050模块，改用JY901十轴姿态传感器模块
+	由于MPU6050模块输出数据在电机转速大时极不稳定，取消MPU6050模块，改用JY901十轴姿态传感器模块  
 
 #### <a name = "dbaef4bdev" /> dbaef4b  --filter  
 **July 24, 2015 15:59 PM**  
@@ -160,25 +160,25 @@ _ _ _
 #### <a name = "440c68adev" /> 440c68a  
 **July 21, 2015 9:34 PM**  
 	改编一些程序  
-	1.将各种上位机控制函数放入upmac.c中。
-	2.将电机输入输出、检测零漂由上电启动改为发送指令控制。
-	3.使用XJI上位机，增加检测指令函数。
-
+	1.将各种上位机控制函数放入upmac.c中。  
+	2.将电机输入输出、检测零漂由上电启动改为发送指令控制。  
+	3.使用XJI上位机，增加检测指令函数。  
+	
 	修复一些BUG
-	1.将HC-05 DMA接收通道（RxDMA）的DMA优先级改为最低，该BUG导致第一次向动力摆发送数据后该通道堵占DMA控制器。
-	2.修复停止电机的函数Bug，该Bug导致关闭TIM4后PWM仍继续输出。
-	3.检测零漂结束后清空i值，该Bug导致只能检测一次零漂。
+	1.将HC-05 DMA接收通道（RxDMA）的DMA优先级改为最低，该BUG导致第一次向动力摆发送数据后该通道堵占DMA控制器。  
+	2.修复停止电机的函数Bug，该Bug导致关闭TIM4后PWM仍继续输出。  
+	3.检测零漂结束后清空i值，该Bug导致只能检测一次零漂。  
 
-#### <a name = "fd86bc4dev" />fd86bc4--Merge branch 'checkPIDout' into dev  
-**July 21, 2015 11:22 AM**  
-	修复PID的一些Bug
-	1.零漂前的符号改为+号。
-	2.PIDout改为自加之前的值。
-	3.修改PIDout对于电机的编号
+#### <a name = "fd86bc4dev" />fd86bc4--Merge branch 'checkPIDout' into dev   
+**July 21, 2015 11:22 AM**   
+	修复PID的一些Bug  
+	1.零漂前的符号改为+号。  
+	2.PIDout改为自加之前的值。  
+	3.修改PIDout对于电机的编号  
 
 #### <a name = "a9aa0b6dev" />a9aa0b6--compile whole project of PID control   
 **July 21, 2015 11:15 AM**  
-	编译PID控制程序
+	编译PID控制程序  
     
 #### <a name = "8876d89dev" />8876d89--blank project   
 	新建空白工程  
