@@ -178,6 +178,9 @@ void DetectCmd(void){
 void Motor_Stop(void)
 {
 	MotorStart = DISABLE;
+	PIDParamInit(&x_PendPID);
+	PIDParamInit(&y_PendPID);
+	
 	TIM4->CCR1 = 1;		//ÉèÖÃÕ¼¿Õ±ÈZKB
 	TIM4->CCR2 = 1;
 	TIM4->CCR3 = 1;
