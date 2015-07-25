@@ -58,16 +58,18 @@ void PIDCalculater(PIDStruct * PID,float error){
 	/* 得到偏差量 ----------------------------------------------------*/
     PIDGetError(PID,error);		//获得偏差并更新偏差量数组
 	/* 计算PID输出 ---------------------------------------------------*/
-    PID->Pout = PID->Kp*(PID->error[0] - PID->error[1]);	//计算Pout
+    PID->Pout = PID->Kp * PID->error[0];	//计算Pout
 	
 	/* 分离积分 ------------------------------------------------------*/
-	if((PID->error[0] > -1)  &&  (PID->error[0] < 1)){
-		PID->Iout = PID->Ki* PID->error[0];						//计算Iout
-	}
+	if((PID->error[0] > -1.5)  &&  (PID->error[0] < 1.5)){
+		PID->Iout += PID->Ki* PID->error[0];						//计算Iout
+	}else PID->Iout = 0;
 	
-    PID->Dout = PID->Kd*(PID->error[0] + PID->error[2] -2*PID->error[1]);	//计算Dout
+    PID->Dout = PID->Kd*(PID->error[0] - PID->error[1]);	//计算Dout
 
-    PID->PIDout += PID->Pout + PID->Iout + PID->Dout;		//得到PIDout
+	
+	
+    PID->PIDout = PID->Pout + PID->Iout + PID->Dout;		//得到PIDout
     /* 高低阈值限制 --------------------------------------------------*/
 // 	if(PID->PIDout > PID->PIDout_H)PID->PIDout = PID->PIDout_H;		//PIDout最高值限制
 // 	if(PID->PIDout < PID->PIDout_L)PID->PIDout = PID->PIDout_L;		//PIDout最高值限制
