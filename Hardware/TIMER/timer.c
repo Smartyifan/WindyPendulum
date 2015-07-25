@@ -23,7 +23,7 @@ void TIM3_IRQHandler(void)
 			//程序运行指示
  			R_LED=~R_LED;     
 			//电机启动提示
-			if(MotorStart == ENABLE)  B_LED=~R_LED;
+// 			if(MotorStart == ENABLE)  B_LED=~R_LED;
  		}
 		if(_2s == 2)
  		{
@@ -32,13 +32,7 @@ void TIM3_IRQHandler(void)
 			if(MotorStart == ENABLE)
 			{
 			/*蓝色LED闪烁 ----------------------------------------------------*/
-			B_LED=0;           //表示电机控制打开，每2s快速闪烁两次
-			delay_ms(100);
-			B_LED=1;
-			delay_ms(100);
-			B_LED=0;            
-			delay_ms(100);
-			B_LED=1;
+			B_LED=~B_LED;           //表示电机控制打开，每2s快速闪烁两次
 			}
  		}
  		_1s++;

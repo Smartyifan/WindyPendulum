@@ -61,12 +61,12 @@ void PIDCalculater(PIDStruct * PID,float error){
     PID->Pout = PID->Kp*(PID->error[0] - PID->error[1]);	//计算Pout
 	
 	/* 分离积分 ------------------------------------------------------*/
-	if((PID->error[0] > -0.5)  &&  (PID->error[0] < 0.5)){
+	if((PID->error[0] > -1)  &&  (PID->error[0] < 1)){
 		PID->Iout = PID->Ki* PID->error[0];						//计算Iout
 	}
 	
     PID->Dout = PID->Kd*(PID->error[0] + PID->error[2] -2*PID->error[1]);	//计算Dout
-	//下面PID输出的写法是不是有问题？
+
     PID->PIDout += PID->Pout + PID->Iout + PID->Dout;		//得到PIDout
     /* 高低阈值限制 --------------------------------------------------*/
 // 	if(PID->PIDout > PID->PIDout_H)PID->PIDout = PID->PIDout_H;		//PIDout最高值限制
@@ -94,10 +94,10 @@ void PIDGetError(PIDStruct * PID,float error){
 s16 motor1=0,motor2=0,motor3=0,motor4=0;
 void PIDControl(void){
 	//计算每个电机的PWM变化是升高还是降低//代码移植时要改动
-	motor1 = TIM4->CCR1 +((s16)(y_PendPID.PIDout));
-	motor2 = TIM4->CCR2 +((s16)(x_PendPID.PIDout));
-	motor3 = TIM4->CCR3 -((s16)(y_PendPID.PIDout));
-	motor4 = TIM4->CCR4 -((s16)(x_PendPID.PIDout));
+	motor1 = TIM4->CCR1 -((s16)(y_PendPID.PIDout));
+	motor2 = TIM4->CCR2 -((s16)(x_PendPID.PIDout));
+	motor3 = TIM4->CCR3 +((s16)(y_PendPID.PIDout));
+	motor4 = TIM4->CCR4 +((s16)(x_PendPID.PIDout));
 
 	PWM_SET(motor1,motor2,motor3,motor4);
 }
