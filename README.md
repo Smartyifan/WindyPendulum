@@ -1,4 +1,4 @@
-# WindyPendulum -- 风力摆
+i# WindyPendulum -- 风力摆
 
 ***  
 
@@ -140,13 +140,26 @@ _ _ _
 #### 版本号目录  
 [a9aa0b6](#a9aa0b6dev)  
 [8876d89](#8876d89dev)  
-
-
-
+[440c68a](#440c68adev)  
+[dbaef4b](#dbaef4bdev)  
+[33f75ad](#33f75addev)  
+[b822961](#b822961dev)  
 _ _ _
-#### <a name = "" /> --
+#### <a name = "b822961dev" /> b822961 --MotorReversal  
+**July 25, 2015 3:06 PM**
+	修复一个Bug，由于JY901坐标轴方向与MPU6050坐标轴相反，导致电机方向相反。
+
+#### <a name = "33f75addev" /> 33f75ad --UseJY901  
+**July 24, 2015 20:02 PM**  
+	由于MPU6050模块输出数据在电机转速大时极不稳定，取消MPU6050模块，改用JY901十轴姿态传感器模块
+
+#### <a name = "dbaef4bdev" /> dbaef4b  --filter  
+**July 24, 2015 15:59 PM**  
+	增加对MPU6050采集数据的滤波  
+
+#### <a name = "440c68adev" /> 440c68a  
 **July 21, 2015 9:34 PM**  
-	改编一些程序
+	改编一些程序  
 1.将各种上位机控制函数放入upmac.c中。
 2.将电机输入输出、检测零漂由上电启动改为发送指令控制。
 3.使用XJI上位机，增加检测指令函数。
