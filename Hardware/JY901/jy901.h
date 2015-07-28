@@ -56,6 +56,11 @@ typedef struct{
 		float PitchCuled;	//俯仰
 	}AngCuled;
 	
+	struct {			//角速度转化为 单位°/s
+		float Rol;		
+		float Pitch;
+	}WxCuled;
+	
 	struct {			//零漂
 		float RolZeroDirft;		//横滚零漂
 		float PitchZeroDirft;	//俯仰零漂

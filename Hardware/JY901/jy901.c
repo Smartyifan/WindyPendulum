@@ -28,6 +28,7 @@
 #include "PID/PID.h"
 #include "TIMER/timer.h"
 #include "LED/led.h"
+#include "PWM/pwm.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -104,7 +105,7 @@ void USART2_IRQHandler(void){
   *@brief   	DMA1_Channel6_IRQHandler  DMA通道6中断函数，用于读MPU6050之后进行相关处理
   *@param   	None
   *@retval    	None
-  *@attention 	执行时间 46.14us（完成零漂检测之后）		测量工具:ST-Link_V2
+  *@attention 	执行时间 16.77us（完成零漂检测之后）		测量工具:ST-Link_V2
 				抢占优先级 1 子优先级 0
   */
 u16 i=0;  
@@ -132,6 +133,10 @@ void DMA1_Channel6_IRQHandler(void){
 		if(abs(JY901.Ang.Rol) > 273 && abs(JY901.Ang.Rol <13653))		JY901.AngCuled.RolCuled = (float)JY901.Ang.Rol/32768*180;
 		if(abs(JY901.Ang.Pitch) > 273 && abs(JY901.Ang.Pitch <13653)) 	JY901.AngCuled.PitchCuled = (float)JY901.Ang.Pitch/32768*180; 
 
+		/* 角速度转换 --------------------------------------------------------------------*/
+		JY901.WxCuled.Rol = (float)JY901.Wx.x/32768*2000;
+		JY901.WxCuled.Pitch = (float)JY901.Wx.y/32768*2000;
+		
 		/* 零漂计算-----------------------------------------------------------------------*/
 		/*CuledFlag为0时偏差未计算完成，为1时表示偏差计算完成*/
 		if(DetectZeroDrift == ENABLE) 
@@ -183,14 +188,54 @@ void DMA1_Channel6_IRQHandler(void){
 			y_CurrentError = y_TargetAngle - JY901.AngCuled.PitchCuled + JY901.ZeroDirft.PitchZeroDirft;
 			
 			/* 计算PIDoout --------------------------------------------------------------*/
-			PIDCalculater(&x_PendPID,x_CurrentError);
-			PIDCalculater(&y_PendPID,y_CurrentError);
+// 			PIDCalculater(&x_PendPID,x_CurrentError);
+// 			PIDCalculater(&y_PendPID,y_CurrentError);
+			/* 计算Pout --------------------------------------------*/
+			x_PendPID.Pout = x_PendPID.Kp * x_CurrentError;			//Rol
+			y_PendPID.Pout = y_PendPID.Kp * y_CurrentError;			//Pitch
+			
+			/* 计算Iout --------------------------------------------*/
+			if(x_CurrentError>-1.5 && x_CurrentError <1.5){			//Rol
+				x_PendPID.Iout += x_PendPID.Ki * x_CurrentError;
+			}else x_PendPID.Iout = 0;
+			
+			if(y_CurrentError>-1.5 && y_CurrentError <1.5){			//Pitch
+				y_PendPID.Iout += y_PendPID.Ki * y_CurrentError;
+			}else y_PendPID.Iout = 0;
+			
+			/* 计算Dout --------------------------------------------*/
+			x_PendPID.Dout = -x_PendPID.Kd * JY901.WxCuled.Rol;		//Rol
+			y_PendPID.Dout = -y_PendPID.Kd * JY901.WxCuled.Pitch;	//Pitch	
 			
 			/* 将PIDout输出至TIM4控制电机 -------------------------------------------------*/
-			PIDControl();		
+// 			PIDControl();		
+
+			//Pout 与 Iout 
+			motor1 = TIM4->CCR1 -((s16)(y_PendPID.Pout + y_PendPID.Iout));	
+			motor2 = TIM4->CCR2 -((s16)(x_PendPID.Pout + x_PendPID.Iout));
+			motor3 = TIM4->CCR3 +((s16)(y_PendPID.Pout + y_PendPID.Iout));
+			motor4 = TIM4->CCR4 +((s16)(x_PendPID.Pout + x_PendPID.Iout));
+
+			if(motor1>4800)motor1 = 4800;
+			if(motor2>4800)motor2 = 4800;
+			if(motor3>4800)motor3 = 4800;
+			if(motor4>4800)motor4 = 4800;
+
+			if(motor1<=10)motor1 = 10;
+			if(motor2<=10)motor2 = 10;
+			if(motor3<=10)motor3 = 10;
+			if(motor4<=10)motor4 = 10;
+
+			//Dout
+			motor1 -= y_PendPID.Dout;
+			motor2 -= x_PendPID.Dout;
+			motor3 += y_PendPID.Dout;
+			motor4 += x_PendPID.Dout;
+			
+			PWM_SET(motor1,motor2,motor3,motor4);
 
 			/* 在XJI上位机画出数据图形 ----------------------------------------------------*/
- 			SimplePlotSend(&HC05,JY901.AngCuled.RolCuled,x_CurrentError,x_PendPID.PIDout,(float)TIM4->CCR4);		//执行时间 7.92us ≈ 8us
+ 			SimplePlotSend(&HC05,JY901.AngCuled.RolCuled,x_CurrentError,JY901.WxCuled.Rol,(float)TIM4->CCR4);		//执行时间 7.92us ≈ 8us
 			
 		}
 		

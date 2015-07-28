@@ -143,6 +143,7 @@ _ _ _
 #### 分支说明  
 	发布待稳定版本的分支  
 #### 版本号目录  
+[cccc262](#cccc262dev)  
 [b822961](#b822961dev)  
 [33f75ad](#33f75addev)  
 [dbaef4b](#dbaef4bdev)  
@@ -152,7 +153,15 @@ _ _ _
 
 
 _ _ _
-#### <a name = "dev" /> --debugPID  
+#### <a name = "dev" /> --UseWx
+**July 25, 2015 8:00 PM**  
+修改部分程序
+
+1. 使用角速度作为D的输入。
+2. 使用两个电机同时调节。
+
+
+#### <a name = "cccc262dev" /> cccc262--debugPID  
 **July 25, 2015 3:27 PM**  
 修复PID计算的一些Bug。  
     
