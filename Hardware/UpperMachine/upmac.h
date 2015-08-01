@@ -23,10 +23,10 @@
 /* extern Variables ----------------------------------------------------------*/
 
 /* extern function------------------------------------------------------------*/
-extern void SimplePlotSend(HC05Str * HC05,float A,float B,float C,float D);	 	//ÔÚXJIÉÏÎ»»úÖĞ»­Í¼
-extern void Motor_Start_Up(void);			//Æô¶¯µç»ú
-extern void Motor_Stop(void);				//Í£Ö¹µç»ú
-extern void StartDetectZeroDrift(void);		//Æô¶¯¼ì²âÁãÆ¯
-extern void DetectCmd(void);				//Ê¶±ğÉÏÎ»»úÃüÁî
+extern void SimplePlotSend(HC05Str * HC05,float A,float B,float C,float D);	 	//åœ¨XJIä¸Šä½æœºä¸­ç”»å›¾
+extern void Motor_Start_Up(void);			//å¯åŠ¨ç”µæœº
+extern void Motor_Stop(void);				//åœæ­¢ç”µæœº
+extern void StartDetectZeroDrift(void);		//å¯åŠ¨æ£€æµ‹é›¶æ¼‚
+extern void DetectCmd(void);				//è¯†åˆ«ä¸Šä½æœºå‘½ä»¤
 #endif
 /******************* (C) COPYRIGHT 2014 STMicroelectronics *****END OF FILE****/

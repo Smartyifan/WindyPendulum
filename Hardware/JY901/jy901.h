@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * @file    E:\ButterFly\Hardware\JY901\jy901.h
-  * @author  ¼ÖÒ»·«
+  * @author  è´¾ä¸€å¸†
   * @version V0.0
   * @date    2015-07-11 09:54:46
   * @brief   
@@ -18,60 +18,60 @@
 #include "sys/sys.h"
 
 /* Define --------------------------------------------------------------------*/
-#define RxDataNum	5			//Òª½ÓÊÜµÄÊı¾İÖ¡Êı
-#define JY901TxLen  5			//·¢ËÍÒ»¸öÖ¸ÁîµÄ×Ö½ÚÊı
-#define JY901RxLen  10+11*(RxDataNum-1)	//½ÓÊÕÊı¾İ³¤¶È
-#define ZeroDirftCulNum   300   	//¼ÆËãÁãÆ¯²ÉÑùÊıÄ¿
+#define RxDataNum	5			//è¦æ¥å—çš„æ•°æ®å¸§æ•°
+#define JY901TxLen  5			//å‘é€ä¸€ä¸ªæŒ‡ä»¤çš„å­—èŠ‚æ•°
+#define JY901RxLen  10+11*(RxDataNum-1)	//æ¥æ”¶æ•°æ®é•¿åº¦
+#define ZeroDirftCulNum   300   	//è®¡ç®—é›¶æ¼‚é‡‡æ ·æ•°ç›®
 
 /* TypeDefine ----------------------------------------------------------------*/
 typedef struct{
 	USART_TypeDef * USARTBASE;
 
-	DMA_Channel_TypeDef * DMAChannelTx;		//DMA½ÓÊÕÍ¨µÀºÅ
-	DMA_Channel_TypeDef * DMAChannelRx;		//DMA·¢ËÍÍ¨µÀºÅ
+	DMA_Channel_TypeDef * DMAChannelTx;		//DMAæ¥æ”¶é€šé“å·
+	DMA_Channel_TypeDef * DMAChannelRx;		//DMAå‘é€é€šé“å·
 
-	u8 TxData[JY901TxLen];		//·¢ËÍÊı×é
-	u8 RxData[JY901RxLen];		//½ÓÊÕÊı¾İ
+	u8 TxData[JY901TxLen];		//å‘é€æ•°ç»„
+	u8 RxData[JY901RxLen];		//æ¥æ”¶æ•°æ®
 	
-	struct {			//¼ÓËÙ¶È
-		short x;		//²»×ö×ª»»£¬16Î»Êı¾İ
+	struct {			//åŠ é€Ÿåº¦
+		short x;		//ä¸åšè½¬æ¢ï¼Œ16ä½æ•°æ®
 		short y;
 		short z;
 	}Ax;
 	
-	struct {			//½ÇËÙ¶È
-		short x;		//²»×ö×ª»»£¬16Î»Êı¾İ
+	struct {			//è§’é€Ÿåº¦
+		short x;		//ä¸åšè½¬æ¢ï¼Œ16ä½æ•°æ®
 		short y;
 		short z;
 	}Wx;
 	
-	struct {			//½Ç¶È
-		short Rol;		//ºá¹ö
-		short Pitch;	//¸©Ñö
-		short Yaw;		//Æ«º½
+	struct {			//è§’åº¦
+		short Rol;		//æ¨ªæ»š
+		short Pitch;	//ä¿¯ä»°
+		short Yaw;		//åèˆª
 	}Ang;
 	
-	struct {			//½Ç¶È×ª»¯Îª¶È µ¥Î»
-		float RolCuled;		//ºá¹ö
-		float PitchCuled;	//¸©Ñö
+	struct {			//è§’åº¦è½¬åŒ–ä¸ºåº¦ å•ä½
+		float RolCuled;		//æ¨ªæ»š
+		float PitchCuled;	//ä¿¯ä»°
 	}AngCuled;
 	
-	struct {			//½ÇËÙ¶È×ª»¯Îª µ¥Î»¡ã/s
+	struct {			//è§’é€Ÿåº¦è½¬åŒ–ä¸º å•ä½Â°/s
 		float Rol;		
 		float Pitch;
 	}WxCuled;
 	
-	struct {			//ÁãÆ¯
-		float RolZeroDirft;		//ºá¹öÁãÆ¯
-		float PitchZeroDirft;	//¸©ÑöÁãÆ¯
+	struct {			//é›¶æ¼‚
+		float RolZeroDirft;		//æ¨ªæ»šé›¶æ¼‚
+		float PitchZeroDirft;	//ä¿¯ä»°é›¶æ¼‚
 	}ZeroDirft;	
 	
 } JY901Str;
 /* extern Variables ----------------------------------------------------------*/
 extern JY901Str JY901;
-extern FunctionalState DetectZeroDrift;	//Æô¶¯¼ì²âÁãÆ¯
-extern ErrorStatus DriftDetected;		//ÁãÆ¯¼ì²âÍê³É
-extern FunctionalState MotorStart;       //µç»úÆô¶¯Óë·ñ
+extern FunctionalState DetectZeroDrift;	//å¯åŠ¨æ£€æµ‹é›¶æ¼‚
+extern ErrorStatus DriftDetected;		//é›¶æ¼‚æ£€æµ‹å®Œæˆ
+extern FunctionalState MotorStart;       //ç”µæœºå¯åŠ¨ä¸å¦
 extern u16 i; 
 /* extern function------------------------------------------------------------*/
 extern void JY901Init(JY901Str * JY901);

@@ -1,16 +1,16 @@
 /**
   ******************************************************************************
   * @file    E:\GitRepo\InverPend\Hardware\PID\PID.c
-  * @author  ¼ÖÒ»·«
+  * @author  è´¾ä¸€å¸†
   * @version V3.5.0
   * @date    2015-07-02 16:01:43
-  * @brief   Í¨ÓÃÔöÁ¿Ê½PID¼ÆËã
+  * @brief   é€šç”¨å¢žé‡å¼PIDè®¡ç®—
   ******************************************************************************
   * @attention
-  *	Ê¹ÓÃ²½Öè£º
-  *		1.¶¨ÒåÏàÓ¦½á¹¹Ìå²¢Ê¹ÓÃPIDParamInit³õÊ¼»¯Ïà¹Ø²ÎÊý
-  *		2.ÔÚÊ¹ÓÃÇ°ÏÈ¸øKp\Ki\Kd¸³Öµ
-  *		3.Í¨¹ýPIDCalculaterµÃµ½PIDoutÊä³ö
+  *	ä½¿ç”¨æ­¥éª¤ï¼š
+  *		1.å®šä¹‰ç›¸åº”ç»“æž„ä½“å¹¶ä½¿ç”¨PIDParamInitåˆå§‹åŒ–ç›¸å…³å‚æ•°
+  *		2.åœ¨ä½¿ç”¨å‰å…ˆç»™Kp\Ki\Kdèµ‹å€¼
+  *		3.é€šè¿‡PIDCalculaterå¾—åˆ°PIDoutè¾“å‡º
   ******************************************************************************
   */  
   
@@ -28,7 +28,7 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-PIDStruct x_PendPID,y_PendPID;		//°Ú¸ËPID¿ØÖÆ½á¹¹Ìå
+PIDStruct x_PendPID,y_PendPID;		//æ‘†æ†PIDæŽ§åˆ¶ç»“æž„ä½“
 /* Private function prototypes -----------------------------------------------*/
 void PIDGetError(PIDStruct * PID,float error);
 /* Private functions ---------------------------------------------------------*/
@@ -40,62 +40,62 @@ void PIDGetError(PIDStruct * PID,float error);
 void PIDParamInit(PIDStruct * PID){
 	
 	/* PIDout Init------------*/
-    PID->PIDout = 0;	//PIDout³õÊ¼»¯Îª0	
+    PID->PIDout = 0;	//PIDoutåˆå§‹åŒ–ä¸º0	
 	/* errors Init------------*/
-    PID->error[0] = 0;	//Çå¿ÕÆ«²îÊý×é
+    PID->error[0] = 0;	//æ¸…ç©ºåå·®æ•°ç»„
 	PID->error[1] = 0;
     PID->error[2] = 0;
 }
 
 /**
-  *@brief   PIDCalculater   ÔöÁ¿Ê½PID¼ÆËã
-  *@param   PIDStruct * PID	Ö¸ÏòPID½á¹¹ÌåµÄÖ¸Õë
+  *@brief   PIDCalculater   å¢žé‡å¼PIDè®¡ç®—
+  *@param   PIDStruct * PID	æŒ‡å‘PIDç»“æž„ä½“çš„æŒ‡é’ˆ
   *@retval  None
   */
-// extern double abs(double __x); //²»¼Ó¸ÃÉùÃ÷Óï¾äÊ¹ÓÃabsÊ±»á³öÏÖ¾¯¸æ
+// extern double abs(double __x); //ä¸åŠ è¯¥å£°æ˜Žè¯­å¥ä½¿ç”¨absæ—¶ä¼šå‡ºçŽ°è­¦å‘Š
 void PIDCalculater(PIDStruct * PID,float error){  
 	
-	/* µÃµ½Æ«²îÁ¿ ----------------------------------------------------*/
-    PIDGetError(PID,error);		//»ñµÃÆ«²î²¢¸üÐÂÆ«²îÁ¿Êý×é
-	/* ¼ÆËãPIDÊä³ö ---------------------------------------------------*/
-    PID->Pout = PID->Kp * PID->error[0];	//¼ÆËãPout
+	/* å¾—åˆ°åå·®é‡ ----------------------------------------------------*/
+    PIDGetError(PID,error);		//èŽ·å¾—åå·®å¹¶æ›´æ–°åå·®é‡æ•°ç»„
+	/* è®¡ç®—PIDè¾“å‡º ---------------------------------------------------*/
+    PID->Pout = PID->Kp * PID->error[0];	//è®¡ç®—Pout
 	
-	/* ·ÖÀë»ý·Ö ------------------------------------------------------*/
+	/* åˆ†ç¦»ç§¯åˆ† ------------------------------------------------------*/
 	if((PID->error[0] > -1.5)  &&  (PID->error[0] < 1.5)){
-		PID->Iout += PID->Ki* PID->error[0];						//¼ÆËãIout
+		PID->Iout += PID->Ki* PID->error[0];						//è®¡ç®—Iout
 	}else PID->Iout = 0;
 	
-    PID->Dout = PID->Kd*(PID->error[0] - PID->error[1]);	//¼ÆËãDout
+    PID->Dout = PID->Kd*(PID->error[0] - PID->error[1]);	//è®¡ç®—Dout
 
 	
 	
-    PID->PIDout = PID->Pout + PID->Iout + PID->Dout;		//µÃµ½PIDout
-    /* ¸ßµÍãÐÖµÏÞÖÆ --------------------------------------------------*/
-// 	if(PID->PIDout > PID->PIDout_H)PID->PIDout = PID->PIDout_H;		//PIDout×î¸ßÖµÏÞÖÆ
-// 	if(PID->PIDout < PID->PIDout_L)PID->PIDout = PID->PIDout_L;		//PIDout×î¸ßÖµÏÞÖÆ
+    PID->PIDout = PID->Pout + PID->Iout + PID->Dout;		//å¾—åˆ°PIDout
+    /* é«˜ä½Žé˜ˆå€¼é™åˆ¶ --------------------------------------------------*/
+// 	if(PID->PIDout > PID->PIDout_H)PID->PIDout = PID->PIDout_H;		//PIDoutæœ€é«˜å€¼é™åˆ¶
+// 	if(PID->PIDout < PID->PIDout_L)PID->PIDout = PID->PIDout_L;		//PIDoutæœ€é«˜å€¼é™åˆ¶
 }
 
 /**
   *@brief   PIDGetError		
-  *@param   PIDStruct * PID	Ö¸ÏòPID½á¹¹ÌåµÄÖ¸Õë
-  *			double error	µ±Ç°Æ«²îÁ¿			
+  *@param   PIDStruct * PID	æŒ‡å‘PIDç»“æž„ä½“çš„æŒ‡é’ˆ
+  *			double error	å½“å‰åå·®é‡			
   *@retval  None
   */
 void PIDGetError(PIDStruct * PID,float error){
-	PID->error[2] = PID->error[1];	//Êý×éÒÆÎ»
+	PID->error[2] = PID->error[1];	//æ•°ç»„ç§»ä½
 	PID->error[1] = PID->error[0];
     PID->error[0] = error;
 }
 
 /**
-  *@brief   PIDControl	¸ù¾ÝPIDout¿ØÖÆÍâ²¿Éè±¸£¬ÄÚÈÝ¸ù¾ÝÊµ¼ÊÇé¿öÊéÐ´
-  *@param   PIDStruct * PID	Ö¸ÏòPID½á¹¹ÌåµÄÖ¸Õë	
+  *@brief   PIDControl	æ ¹æ®PIDoutæŽ§åˆ¶å¤–éƒ¨è®¾å¤‡ï¼Œå†…å®¹æ ¹æ®å®žé™…æƒ…å†µä¹¦å†™
+  *@param   PIDStruct * PID	æŒ‡å‘PIDç»“æž„ä½“çš„æŒ‡é’ˆ	
   *@retval  None
   */
 
 s16 motor1=0,motor2=0,motor3=0,motor4=0;
 void PIDControl(void){
-	//¼ÆËãÃ¿¸öµç»úµÄPWM±ä»¯ÊÇÉý¸ß»¹ÊÇ½µµÍ//´úÂëÒÆÖ²Ê±Òª¸Ä¶¯
+	//è®¡ç®—æ¯ä¸ªç”µæœºçš„PWMå˜åŒ–æ˜¯å‡é«˜è¿˜æ˜¯é™ä½Ž//ä»£ç ç§»æ¤æ—¶è¦æ”¹åŠ¨
 	motor1 = TIM4->CCR1 -((s16)(y_PendPID.PIDout));
 	motor2 = TIM4->CCR2 -((s16)(x_PendPID.PIDout));
 	motor3 = TIM4->CCR3 +((s16)(y_PendPID.PIDout));

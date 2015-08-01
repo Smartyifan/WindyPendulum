@@ -1,10 +1,10 @@
 /**
   ******************************************************************************
   * @file    	E:\ButterFly\Hardware\UpperMachine\upmac.c
-  * @author  	¼ÖÒ»·«
+  * @author  	è´¾ä¸€å¸†
   * @version	V0.0
   * @date  		2015-07-10 10:38:53
-  * @brief   	ÓÃÓÚÓëUpperMachineÉÏÎ»»úÍ¨Ñ¶
+  * @brief   	ä¸UpperMachineä¸Šä½æœºé€šè®¯
   ******************************************************************************
   * @attention
   *
@@ -25,6 +25,7 @@
 #include "delay/delay.h"
 #include "PID/pid.h"
 #include "TIMER/timer.h"
+#include "MotionCtr/motionctr.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -76,11 +77,8 @@ void SimplePlotSend(HC05Str * HC05,float A,float B,float C,float D){
 	UARTxDMASend(HC05,18);
 }
 
-
-
-
 /**
-  *@brief   DetectCmd	Ê¶±ğÉÏÎ»»ú·¢ËÍµÄÖ¸Áî
+  *@brief   DetectCmd	æ£€æµ‹æ”¶åˆ°çš„æŒ‡ä»¤
   *@param   None
   *@retval  None
   */
@@ -93,75 +91,139 @@ void DetectCmd(void){
 	if(HC05.RxData[0] == 0xAA){
 		switch(HC05.RxData[1]){
 			
-			/* ¿ØÖÆÀàÖ¸Áî -------------------------------------------*/
-			case 0x51: {				//Í£Ö¹µç»ú
+			/* æ§åˆ¶ç±»æŒ‡ä»¤-------------------------------------------*/
+			case 0x51: {				//åœæ­¢ç”µæœº
 				Motor_Stop();
-				HC05printf(&HC05,"Motor_Stop\r\n");
+				HC05printf(&HC05," Motor_Stop\r\n");
 				break;
 			}
-			case 0x52:{					//Æô¶¯µç»ú
+			case 0x52:{					//å¯åŠ¨ç”µæœº
 				Motor_Start_Up();
-				HC05printf(&HC05,"Motor_Start_Up\r\n");
+				HC05printf(&HC05," Motor_Start_Up\r\n");
 				break;
 			}
-			case 0x53:{					//¼ì²âÁãÆ¯
+			case 0x53:{					//æ ¡å‡†é›¶å
 				StartDetectZeroDrift();
-				HC05printf(&HC05,"StartDetectZeroDrift\r\n");
+				HC05printf(&HC05," StartDetectZeroDrift\r\n");
+				break;
+			}
+			case 0x54:{					//å•æ‘†æ¨¡å¼
+				MontionControl.MotionMode = SinglePend;
+				MontionControl.CtrlFun = SinglePendCtrl;
+				HC05printf(&HC05," SinglePend Mode...\r\n");
+				break;
+			}
+			case 0x55:{					//å•æ‘†Rolæ¨¡å¼
+				MontionControl.SinglePendParam.Pend = Rol;
+				HC05printf(&HC05," SinglePend Mode in Rol...\r\n");
+				break;
+			}
+			case 0x56:{					//å•æ‘†Pitchæ¨¡å¼
+				MontionControl.SinglePendParam.Pend = Pitch;
+				HC05printf(&HC05," SinglePend Mode in Pitch...\r\n");
+				break;
+			}
+			case 0x57:{					//åœ†é”¥æ‘†æ¨¡å¼
+				MontionControl.MotionMode = ConePend;
+				MontionControl.CtrlFun = ConePendCtrl;
+				HC05printf(&HC05," ConePend Mode...\r\n");
+				break;
+			}
+			case 0x58:{					//ç¨³å®šç‚¹æ¨¡å¼
+				MontionControl.MotionMode = StabelPlot;
+				MontionControl.CtrlFun = StablePlotCtrl;
+				HC05printf(&HC05," StabelPlot Mode...\r\n");
+				break;
+			}
+			case 0x59:{					//è½¨è¿¹è·Ÿè¸ªæ¨¡å¼
+				MontionControl.MotionMode = Tracked;
+				MontionControl.CtrlFun = TrackedCtrl;
+				HC05printf(&HC05," Tracked Mode...\r\n");
+				break;
+			}
+			
+			/* è¿åŠ¨ç±»æŒ‡ä»¤ --------------------------------------------*/
+			/* å•æ‘†è¿åŠ¨ -----------------------------*/
+			case 0xB1:{									//å•æ‘†æ‘†å¹…	
+				memcpy(&temp.c[0],&HC05.RxData[2],4);		
+				MontionControl.SinglePendParam.Amplitude = temp.f;
+				HC05printf(&HC05," Amplitude = %f\r\n",MontionControl.SinglePendParam.Amplitude);
+				break;
+			}
+			case 0xB2:{
+				memcpy(&temp.c[0],&HC05.RxData[2],4);	//å•æ‘†å‘¨æœŸ	
+				MontionControl.SinglePendParam.Period = temp.f;
+				HC05printf(&HC05," Preiod = %f\r\n",MontionControl.SinglePendParam.Period);
+				break;
+			}
+			
+			/* åœ†é”¥æ‘†è¿åŠ¨ --------------------------*/
+			case 0xC1:{									//åœ†é”¥æ‘†æ‘†å¹…
+				memcpy(&temp.c[0],&HC05.RxData[2],4);		
+				MontionControl.ConePendParam.Amplitude = temp.f;
+				HC05printf(&HC05," Amplitude = %f\r\n",MontionControl.ConePendParam.Amplitude);
+				break;
+			}
+			case 0xC2:{									//åœ†é”¥æ‘†å‘¨æœŸ
+				memcpy(&temp.c[0],&HC05.RxData[2],4);		
+				MontionControl.ConePendParam.Period = temp.f;
+				HC05printf(&HC05," Preiod = %f\r\n",MontionControl.ConePendParam.Period);
+				break;
+			}
+			
+			/* ç¨³å®šç‚¹è¿åŠ¨ ------------------------*/
+			case 0xD1:{									//ç¨³å®šç‚¹RolæœŸæœ›
+				memcpy(&temp.c[0],&HC05.RxData[2],4);		
+				MontionControl.StableParam.RolExpect = temp.f;
+				HC05printf(&HC05," RolExpect = %f\r\n",MontionControl.StableParam.RolExpect);
+				break;
+			}
+			case 0xD2:{									//ç¨³å®šç‚¹PitchæœŸæœ›
+				memcpy(&temp.c[0],&HC05.RxData[2],4);		
+				MontionControl.StableParam.PitchExpect = temp.f;
+				HC05printf(&HC05," PitchExpect = %f\r\n",MontionControl.StableParam.PitchExpect);
 				break;
 			}
 			
 			
-			/* µ÷²ÎÀàÖ¸Áî ---------------------------------------------*/
+			/* è°ƒå‚ç±»æŒ‡ä»¤ --------------------------------------------*/
 			case 0xA1:{					//Rol.Kp
-				memcpy(&temp.c[0],&HC05.RxData[2],4);		//¿½±´¸¡µãÊı
+				memcpy(&temp.c[0],&HC05.RxData[2],4);		//æ‹·è´æ•°ç»„
 				x_PendPID.Kp = temp.f;
-				HC05printf(&HC05,"x_PendPID.Kp = %f\r\n",x_PendPID.Kp);
+				HC05printf(&HC05," x_PendPID.Kp = %f\r\n",x_PendPID.Kp);
 				break;
 			}
 			case 0xA2:{					//Rol.Ki
-				memcpy(&temp.c[0],&HC05.RxData[2],4);		//¿½±´¸¡µãÊı
+				memcpy(&temp.c[0],&HC05.RxData[2],4);		
 				x_PendPID.Ki = temp.f;
-				HC05printf(&HC05,"x_PendPID.Ki = %f\r\n",x_PendPID.Ki);				
+				HC05printf(&HC05," x_PendPID.Ki = %f\r\n",x_PendPID.Ki);				
 				break;
 			}
 			case 0xA3:{					//Rol.Kd
-				memcpy(&temp.c[0],&HC05.RxData[2],4);		//¿½±´¸¡µãÊı
+				memcpy(&temp.c[0],&HC05.RxData[2],4);		
 				x_PendPID.Kd = temp.f;
-				HC05printf(&HC05,"x_PendPID.Kd = %f\r\n",x_PendPID.Kd);
+				HC05printf(&HC05," x_PendPID.Kd = %f\r\n",x_PendPID.Kd);
 				break;
 			}
 			
 			case 0xA4:{					//Pitch.Kp
-				memcpy(&temp.c[0],&HC05.RxData[2],4);		//¿½±´¸¡µãÊı
+				memcpy(&temp.c[0],&HC05.RxData[2],4);		
 				y_PendPID.Kp = temp.f;
-				HC05printf(&HC05,"y_PendPID.Kp = %f\r\n",y_PendPID.Kp);
+				HC05printf(&HC05," y_PendPID.Kp = %f\r\n",y_PendPID.Kp);
 				break;
 			}
 			case 0xA5:{					//Pitch.Ki
-				memcpy(&temp.c[0],&HC05.RxData[2],4);		//¿½±´¸¡µãÊı
+				memcpy(&temp.c[0],&HC05.RxData[2],4);		
 				y_PendPID.Ki = temp.f;
-				HC05printf(&HC05,"y_PendPID.Ki = %f\r\n",y_PendPID.Ki);
+				HC05printf(&HC05," y_PendPID.Ki = %f\r\n",y_PendPID.Ki);
 				break;
 			}
 			case 0xA6:{					//Pitch.Kd
-				memcpy(&temp.c[0],&HC05.RxData[2],4);		//¿½±´¸¡µãÊı
+				memcpy(&temp.c[0],&HC05.RxData[2],4);		
 				y_PendPID.Kd = temp.f;
-				HC05printf(&HC05,"y_PendPID.Kd = %f\r\n",y_PendPID.Kd);
+				HC05printf(&HC05," y_PendPID.Kd = %f\r\n",y_PendPID.Kd);
 				break;
 			}
-			case 0xA7:{					//x_TargetAngle
-				memcpy(&temp.c[0],&HC05.RxData[2],4);		//¿½±´¸¡µãÊı
-				x_TargetAngle = temp.f;
-				HC05printf(&HC05,"x_TargetAngle = %f\r\n",x_TargetAngle);
-				break;
-			}
-			case 0xA8:{					//y_TargetAngle
-				memcpy(&temp.c[0],&HC05.RxData[2],4);		//¿½±´¸¡µãÊı
-				y_TargetAngle = temp.f;
-				HC05printf(&HC05,"y_TargetAngle = %f\r\n",y_TargetAngle);
-				break;
-			}
-
 		}
 	}else return;
 }
@@ -171,7 +233,7 @@ void DetectCmd(void){
 
 
 /**
-  *@brief   Motor_Stop		¹Ø±Õµç»úÊä³ö
+  *@brief   Motor_Stop		
   *@param   None
   *@retval  None
   */
@@ -181,35 +243,35 @@ void Motor_Stop(void)
 	PIDParamInit(&x_PendPID);
 	PIDParamInit(&y_PendPID);
 	
-	TIM4->CCR1 = 1;		//ÉèÖÃÕ¼¿Õ±ÈZKB
+	TIM4->CCR1 = 1;		//è®¾ç½®å ç©ºæ¯”ZKB
 	TIM4->CCR2 = 1;
 	TIM4->CCR3 = 1;
 	TIM4->CCR4 = 1;
-	TIM4->CCER &=~(1<<0);			//Ê¹ÄÜTimer4 PWMÊä³ö½ûÖ¹
+	TIM4->CCER &=~(1<<0);			//ä½¿èƒ½Timer4 PWMè¾“å‡ºç¦æ­¢
 	TIM4->CCER &=~(1<<4);
 	TIM4->CCER &=~(1<<8);
 	TIM4->CCER &=~(1<<12);
-	TIM4->CR1&=~(1<<0);        //¹Ø±Õ¶¨Ê±Æ÷4
+	TIM4->CR1&=~(1<<0);        //å…³é—­å®šæ—¶å™¨4
 }
 
 
 /**
-  *@brief   Motor_Start_Up		Æô¶¯µç»úÊä³ö
+  *@brief   Motor_Start_Up		å¯åŠ¨ç”µæœºè¾“å‡º
   *@param   None
   *@retval    None
   */
 void Motor_Start_Up(void)
 {
 	MotorStart = ENABLE;
-	TIM4->CCER |= 1<<0;			//Ê¹ÄÜTimer4 PWMÊä³ö
+	TIM4->CCER |= 1<<0;			//ä½¿èƒ½Timer4 PWMè¾“å‡º
 	TIM4->CCER |= 1<<4;
 	TIM4->CCER |= 1<<8;
 	TIM4->CCER |= 1<<12;
-	TIM4->CR1|=0x0001;   //´ò¿ª¶¨Ê±Æ÷4£¬¿ªÊ¼Êä³öPWM²¨
+	TIM4->CR1|=0x0001;   //æ‰“å¼€å®šæ—¶å™¨4ï¼Œå¼€å§‹è¾“å‡ºPWMæ³¢
 }
 
 /**
-  *@brief   StartDetectZeroDrift	Æô¶¯¼ì²âÁãÆ¯
+  *@brief   StartDetectZeroDrift	å¯åŠ¨æ£€æµ‹é›¶æ¼‚
   *@param   None
   *@retval    None
   */

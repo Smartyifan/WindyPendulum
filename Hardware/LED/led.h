@@ -1,17 +1,17 @@
 #ifndef __LED_H
 #define __LED_H	 
 #include "sys/sys.h"
-//Mini STM32¿ª·¢°å
-//LEDÇı¶¯´úÂë			 
-//ÕıµãÔ­×Ó@ALIENTEK
+//Mini STM32å¼€å‘æ¿
+//LEDé©±åŠ¨ä»£ç 			 
+//æ­£ç‚¹åŸå­@ALIENTEK
 //2010/5/27
 
-//LED¶Ë¿Ú¶¨Òå
+//LEDç«¯å£å®šä¹‰
 #define R_LED PBout(3) // PB3
 #define G_LED PBout(4)// PB4	
 #define B_LED PBout(5)// PB5	
 
-void LED_Init(void);//³õÊ¼»¯		 				    
+void LED_Init(void);//åˆå§‹åŒ–		 				    
 #endif
 
 

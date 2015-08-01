@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * @file    
-  * @author  ¼ÖÒ»·«
+  * @author  è´¾ä¸€å¸†
   * @version V3.5.0
   * @date    2014-10-4
   * @brief   
@@ -18,22 +18,22 @@
 /* Define --------------------------------------------------------------------*/
 
 typedef struct PIDStruct{          
-	float Kp;			//¼ÆËã²ÎÊı
+	float Kp;			//è®¡ç®—å‚æ•°
     float Ki;
     float Kd;
     
-    float error[3];    //´æ·ÅÆ«²îÁ¿µÄÊı×é  
+    float error[3];    //å­˜æ”¾åå·®é‡çš„æ•°ç»„  
         
     float Pout;
     float Iout;
     float Dout;
     
     float PIDout;		//PIDout
-    float PIDout_H;	//PIDoutãĞÖµÏŞÖÆ
+    float PIDout_H;	//PIDouté˜ˆå€¼é™åˆ¶
     float PIDout_L;
 }PIDStruct;
 /*extern function-------------------------------------------------------------*/
-extern PIDStruct x_PendPID,y_PendPID;       //°Ú¸ËPID
+extern PIDStruct x_PendPID,y_PendPID;       //æ‘†æ†PID
 extern s16 motor1,motor2,motor3,motor4;
 extern void PIDParamInit(PIDStruct * PID);
 extern void PIDCalculater(PIDStruct * PID,float error);

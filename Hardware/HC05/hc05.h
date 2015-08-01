@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * @file    
-  * @author  ¼ÖÒ»·«
+  * @author  è´¾ä¸€å¸†
   * @version 
   * @date    
   * @brief   
@@ -18,14 +18,14 @@
 #include "sys/sys.h"
 
 /* Define --------------------------------------------------------------------*/
-#define HC05TxDMA	1		//Ê¹ÄÜTxDMA´«Êä
-#define HC05RxDMA	1		//Ê¹ÄÜRxDMA´«Êä
+#define HC05TxDMA	1		//ä½¿èƒ½TxDMAä¼ è¾“
+#define HC05RxDMA	1		//ä½¿èƒ½RxDMAä¼ è¾“
 
-#define HC05TxLen	50		//HC05Tx DMA ³¤¶È
-#define HC05RxLen	50		//HC05Rx DMA ³¤¶È
+#define HC05TxLen	50		//HC05Tx DMA é•¿åº¦
+#define HC05RxLen	50		//HC05Rx DMA é•¿åº¦
 
-//#define HC05Key		PDout(1)	//À¶ÑÀ¿ØÖÆKEYĞÅºÅ
-//#define HC05LED		PDin(0)		//À¶ÑÀÁ¬½Ó×´Ì¬ĞÅºÅ
+//#define HC05Key		PDout(1)	//è“ç‰™æ§åˆ¶KEYä¿¡å·
+//#define HC05LED		PDin(0)		//è“ç‰™è¿æ¥çŠ¶æ€ä¿¡å·
 /* TypeDefine ----------------------------------------------------------------*/
 typedef struct HC05{
 	USART_TypeDef * USARTBASE;
@@ -35,23 +35,23 @@ typedef struct HC05{
 	u16 KeyPin;
 	u16 LEDPin;
 	
-	DMA_Channel_TypeDef * DMAChannelTx;		//DMA½ÓÊÕÍ¨µÀºÅ
-	DMA_Channel_TypeDef * DMAChannelRx;		//DMA·¢ËÍÍ¨µÀºÅ
+	DMA_Channel_TypeDef * DMAChannelTx;		//DMAæ¥æ”¶é€šé“å·
+	DMA_Channel_TypeDef * DMAChannelRx;		//DMAå‘é€é€šé“å·
 
-	ErrorStatus TxSuccess;		//DMA´«ÊäÍê³É±êÖ¾
-	ErrorStatus Checked;		//¼ì²é±êÖ¾
+	ErrorStatus TxSuccess;		//DMAä¼ è¾“å®Œæˆæ ‡å¿—
+	ErrorStatus Checked;		//æ£€æŸ¥æ ‡å¿—
 	
-	u16 RxLen;					//½ÓÊÕµ½µÄÊı¾İ³¤¶È
+	u16 RxLen;					//æ¥æ”¶åˆ°çš„æ•°æ®é•¿åº¦
 	
 	
-	u8 TxData[HC05TxLen];		//·¢ËÍÊı×é
-	u8 RxData[HC05RxLen];		//½ÓÊÕÊı¾İ
+	u8 TxData[HC05TxLen];		//å‘é€æ•°ç»„
+	u8 RxData[HC05RxLen];		//æ¥æ”¶æ•°æ®
 }HC05Str;
 /* extern Variables ----------------------------------------------------------*/
-extern HC05Str HC05;		//HC05½á¹¹Ìå	
+extern HC05Str HC05;		//HC05ç»“æ„ä½“	
 /* extern function------------------------------------------------------------*/
-extern ErrorStatus HC05Init(HC05Str * HC05);						//³õÊ¼»¯HC05
-extern void UARTxDMASend(HC05Str * HC05,u16 Len);		//Í¨¹ıDMA·¢ËÍÒ»¶¨³¤¶ÈµÄÊı×é
-extern void HC05printf(HC05Str * HC05,char* fmt,...);	//»ùÓÚDMA´«ÊäµÄprintf
+extern ErrorStatus HC05Init(HC05Str * HC05);						//åˆå§‹åŒ–HC05
+extern void UARTxDMASend(HC05Str * HC05,u16 Len);		//é€šè¿‡DMAå‘é€ä¸€å®šé•¿åº¦çš„æ•°ç»„
+extern void HC05printf(HC05Str * HC05,char* fmt,...);	//åŸºäºDMAä¼ è¾“çš„printf
 #endif
 /******************* (C) COPYRIGHT 2014 STMicroelectronics *****END OF FILE****/

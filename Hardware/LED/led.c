@@ -1,14 +1,14 @@
 #include "LED/led.h"
 	   	    
-//LED IO³õÊ¼»¯
+//LED IOåˆå§‹åŒ–
 void LED_Init(void)
 {  	 
-	JTAG_Set(1);   //¹Ø±ÕJTAG,JTAG ÓëLED¹«ÓÃÒý½ÅB3 B4	
-	RCC->APB2ENR|=1<<3;    //Ê¹ÄÜPORTBÊ±ÖÓ	
+	JTAG_Set(1);   //å…³é—­JTAG,JTAG ä¸ŽLEDå…¬ç”¨å¼•è„šB3 B4	
+	RCC->APB2ENR|=1<<3;    //ä½¿èƒ½PORTBæ—¶é’Ÿ	
 	   	 
 	GPIOB->CRL&=0xFF000FFF; 
-	GPIOB->CRL|=0x00333000;//PB3 PB4 PB5 ÍÆÍìÊä³ö   	 
-    GPIOB->ODR|=0x0038; //PB3 PB4 PB5 Êä³ö¸ß										
+	GPIOB->CRL|=0x00333000;//PB3 PB4 PB5 æŽ¨æŒ½è¾“å‡º   	 
+    GPIOB->ODR|=0x0038; //PB3 PB4 PB5 è¾“å‡ºé«˜										
 }
 
 
