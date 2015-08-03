@@ -15,7 +15,7 @@
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
   */
-
+#include "PID/pid.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -36,9 +36,11 @@ void MotionCtrParamInit(MotionCtrStr * MotionCtrl){
 	MotionCtrl->SinglePendParam.Period = 0;
 	MotionCtrl->SinglePendParam.Amplitude = 0;
 	
-	/* 圆锥摆模式参数初始化 -----------------------------*/
-	MotionCtrl->ConePendParam.Period = 0;
-	MotionCtrl->ConePendParam.Amplitude = 0;
+	/* 双摆模式参数初始化 -----------------------------*/
+	MotionCtrl->DoublePendParam.RolPeriod = 0;
+	MotionCtrl->DoublePendParam.RolAmplitude = 0;
+	MotionCtrl->DoublePendParam.PitchPeriod = 0;
+	MotionCtrl->DoublePendParam.PitchAmplitude = 0;
 	
 	/* 稳定点模式参数初始化 -----------------------------*/
 	MotionCtrl->StableParam.PitchExpect = 0;
@@ -53,17 +55,17 @@ void MotionCtrParamInit(MotionCtrStr * MotionCtrl){
   *@param   None
   *@retval  None
   */
-void SinglePendCtrl(void){
-	
+void SinglePendCtrl(float Error){
+	  
 }
 
 
 /**
-  *@brief   ConePendCtrl	圆锥摆模式下的控制函数
+  *@brief   ConePendCtrl	双摆模式下的控制函数
   *@param   None
   *@retval    None
   */
-void ConePendCtrl(void){
+void DoublePendCtrl(float Error){
 
 }
 
@@ -72,7 +74,7 @@ void ConePendCtrl(void){
   *@param   None
   *@retval    None
   */
-void StablePlotCtrl(void){
+void StablePlotCtrl(float Error){
 
 }
 
@@ -82,7 +84,7 @@ void StablePlotCtrl(void){
   *@param   None
   *@retval    None
   */
-void TrackedCtrl(void){
+void TrackedCtrl(float Error){
 	
 }
 /******************* (C) COPYRIGHT 2014 STMicroelectronics *****END OF FILE****/

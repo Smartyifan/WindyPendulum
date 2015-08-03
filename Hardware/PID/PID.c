@@ -28,7 +28,11 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-PIDStruct x_PendPID,y_PendPID;		//摆杆PID控制结构体
+PIDStruct SigRol_PID,SigPitch_PID;		//单摆PID控制结构体
+PIDStruct DobRol_PID,DobPitch_PID;			//双摆PID控制结构体
+PIDStruct StaRol_PID,StaPitch_PID;			//稳定点PID控制结构体
+
+float * pSigPeakValue = NULL;				//单摆峰值指针
 /* Private function prototypes -----------------------------------------------*/
 void PIDGetError(PIDStruct * PID,float error);
 /* Private functions ---------------------------------------------------------*/
@@ -40,11 +44,16 @@ void PIDGetError(PIDStruct * PID,float error);
 void PIDParamInit(PIDStruct * PID){
 	
 	/* PIDout Init------------*/
+	PID->Pout = 0;
+	PID->Iout = 0;
+	PID->Dout = 0;
     PID->PIDout = 0;	//PIDout初始化为0	
 	/* errors Init------------*/
     PID->error[0] = 0;	//清空偏差数组
 	PID->error[1] = 0;
     PID->error[2] = 0;
+	/* PeakValue Init --------*/
+	PID->PeakValue = 0;
 }
 
 /**

@@ -28,15 +28,22 @@ typedef struct PIDStruct{
     float Iout;
     float Dout;
     
+	float PeakValue;	//单摆或双摆的峰值
+	
     float PIDout;		//PIDout
-    float PIDout_H;	//PIDout阈值限制
+    float PIDout_H;		//PIDout阈值限制
     float PIDout_L;
 }PIDStruct;
+/* extern variable ----------------------------------------------------------*/
+extern PIDStruct SigRol_PID,SigPitch_PID;		//单摆PID控制结构体
+extern PIDStruct DobRol_PID,DobPitch_PID;		//双摆PID控制结构体
+extern PIDStruct StaRol_PID,StaPitch_PID;		//稳定点PID控制结构体
+extern s16 motor1,motor2,motor3,motor4;			//电机
+extern float * pSigPeakValue;					//峰值指针
 /*extern function-------------------------------------------------------------*/
-extern PIDStruct x_PendPID,y_PendPID;       //摆杆PID
-extern s16 motor1,motor2,motor3,motor4;
-extern void PIDParamInit(PIDStruct * PID);
-extern void PIDCalculater(PIDStruct * PID,float error);
-extern void PIDControl(void);
+extern void PIDParamInit(PIDStruct * PID);				//PID参数初始化
+extern void PIDGetError(PIDStruct * PID,float error);	//存放偏差		
+extern void PIDCalculater(PIDStruct * PID,float error);	//计算PIDout		
+extern void PIDControl(void);							//PID控制输出	
 #endif
 /******************* (C) COPYRIGHT 2014 STMicroelectronics *****END OF FILE****/

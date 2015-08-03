@@ -18,12 +18,12 @@
 
 /* Define --------------------------------------------------------------------*/
 /* TypeDefine ----------------------------------------------------------------*/
-typedef enum {SinglePend = 0, ConePend = 1,StabelPlot = 2,Tracked = 3} MotionModeTypedef;	//运动模式的选择
+typedef enum {SinglePend = 0, DoublePend = 1,StabelPlot = 2,Tracked = 3} MotionModeTypedef;	//运动模式的选择
 typedef enum {Rol = 0,Pitch = 1}SinglePendSel;												//单摆轴的选择
 typedef struct {
 	MotionModeTypedef MotionMode;	//运动模式
 	
-	void (*CtrlFun) (void);		//控制函数	
+	void (*CtrlFun) (float,float,u16);		//控制函数	
 	
 	struct {					//单摆参数
 		SinglePendSel Pend;		//摆动轴
@@ -31,10 +31,12 @@ typedef struct {
 		float Amplitude;		//摆幅
 	}SinglePendParam;
 	
-	struct{						//圆锥摆参数
-		float Period;			//周期
-		float Amplitude;		//摆幅	
-	}ConePendParam;
+	struct{						//双摆参数
+		float RolPeriod;		//Rol周期
+		float RolAmplitude;		//Rol摆幅
+		float PitchPeriod;		//Pitch周期
+		float PitchAmplitude;	//Pitch摆幅
+	}DoublePendParam;
 	
 	struct{						//稳定点参数
 		float RolExpect;		//Rol期望
@@ -46,10 +48,10 @@ typedef struct {
 extern MotionCtrStr MontionControl;		//运动控制结构体
 /* extern function------------------------------------------------------------*/
 void MotionCtrParamInit(MotionCtrStr * MotionCtrl);		//参数初始化
-extern void SinglePendCtrl(void);		//单摆模式下的控制函数
-extern void ConePendCtrl(void);			//圆锥摆模式下的控制函数
-extern void StablePlotCtrl(void);		//稳定点模式下的控制函数
-extern void TrackedCtrl(void);			//轨迹跟踪模式下的控制函数
+extern void SinglePendCtrl(float RolCule,float PitchCule,u16 Tick);		//单摆模式下的控制函数
+extern void DoublePendCtrl(float RolCule,float PitchCule,u16 Tick);			//圆锥摆模式下的控制函数
+extern void StablePlotCtrl(float RolCule,float PitchCule,u16 Tick);		//稳定点模式下的控制函数
+extern void TrackedCtrl(float RolCule,float PitchCule,u16 Tick);			//轨迹跟踪模式下的控制函数
 
 #endif
 /******************* (C) COPYRIGHT 2014 STMicroelectronics *****END OF FILE****/

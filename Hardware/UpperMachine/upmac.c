@@ -115,17 +115,19 @@ void DetectCmd(void){
 			}
 			case 0x55:{					//单摆Rol模式
 				MontionControl.SinglePendParam.Pend = Rol;
+				pSigPeakValue = & SigRol_PID.PeakValue;
 				HC05printf(&HC05," SinglePend Mode in Rol...\r\n");
 				break;
 			}
 			case 0x56:{					//单摆Pitch模式
 				MontionControl.SinglePendParam.Pend = Pitch;
+				pSigPeakValue = & SigPitch_PID.PeakValue;
 				HC05printf(&HC05," SinglePend Mode in Pitch...\r\n");
 				break;
 			}
-			case 0x57:{					//圆锥摆模式
-				MontionControl.MotionMode = ConePend;
-				MontionControl.CtrlFun = ConePendCtrl;
+			case 0x57:{					//双摆模式
+				MontionControl.MotionMode = DoublePend;
+				MontionControl.CtrlFun = DoublePendCtrl;
 				HC05printf(&HC05," ConePend Mode...\r\n");
 				break;
 			}
@@ -157,17 +159,29 @@ void DetectCmd(void){
 				break;
 			}
 			
-			/* 圆锥摆运动 --------------------------*/
-			case 0xC1:{									//圆锥摆摆幅
+			/* 双摆运动 --------------------------*/
+			case 0xC1:{									//Rol周期
 				memcpy(&temp.c[0],&HC05.RxData[2],4);		
-				MontionControl.ConePendParam.Amplitude = temp.f;
-				HC05printf(&HC05," Amplitude = %f\r\n",MontionControl.ConePendParam.Amplitude);
+				MontionControl.DoublePendParam.RolPeriod = temp.f;
+				HC05printf(&HC05," RolPeriod = %f\r\n",MontionControl.DoublePendParam.RolPeriod);
 				break;
 			}
-			case 0xC2:{									//圆锥摆周期
+			case 0xC2:{									//Rol幅值
 				memcpy(&temp.c[0],&HC05.RxData[2],4);		
-				MontionControl.ConePendParam.Period = temp.f;
-				HC05printf(&HC05," Preiod = %f\r\n",MontionControl.ConePendParam.Period);
+				MontionControl.DoublePendParam.RolAmplitude = temp.f;
+				HC05printf(&HC05," RolAmplitude = %f\r\n",MontionControl.DoublePendParam.RolAmplitude);
+				break;
+			}
+			case 0xC3:{									//Pitch周期
+				memcpy(&temp.c[0],&HC05.RxData[2],4);		
+				MontionControl.DoublePendParam.PitchPeriod = temp.f;
+				HC05printf(&HC05," PitchPeriod = %f\r\n",MontionControl.DoublePendParam.PitchPeriod);
+				break;
+			}
+			case 0xC4:{									//Pitch幅值	
+				memcpy(&temp.c[0],&HC05.RxData[2],4);		
+				MontionControl.DoublePendParam.PitchAmplitude = temp.f;
+				HC05printf(&HC05," PitchAmplitude = %f\r\n",MontionControl.DoublePendParam.PitchAmplitude);
 				break;
 			}
 			
@@ -175,13 +189,13 @@ void DetectCmd(void){
 			case 0xD1:{									//稳定点Rol期望
 				memcpy(&temp.c[0],&HC05.RxData[2],4);		
 				MontionControl.StableParam.RolExpect = temp.f;
-				HC05printf(&HC05," RolExpect = %f\r\n",MontionControl.StableParam.RolExpect);
+				HC05printf(&HC05," StableRolExpect = %f\r\n",MontionControl.StableParam.RolExpect);
 				break;
 			}
 			case 0xD2:{									//稳定点Pitch期望
 				memcpy(&temp.c[0],&HC05.RxData[2],4);		
 				MontionControl.StableParam.PitchExpect = temp.f;
-				HC05printf(&HC05," PitchExpect = %f\r\n",MontionControl.StableParam.PitchExpect);
+				HC05printf(&HC05," StablePitchExpect = %f\r\n",MontionControl.StableParam.PitchExpect);
 				break;
 			}
 			
@@ -189,39 +203,39 @@ void DetectCmd(void){
 			/* 调参类指令 --------------------------------------------*/
 			case 0xA1:{					//Rol.Kp
 				memcpy(&temp.c[0],&HC05.RxData[2],4);		//拷贝数组
-				x_PendPID.Kp = temp.f;
-				HC05printf(&HC05," x_PendPID.Kp = %f\r\n",x_PendPID.Kp);
+				StaRol_PID.Kp = temp.f;
+				HC05printf(&HC05," StaRol_PID.Kp = %f\r\n",StaRol_PID.Kp);
 				break;
 			}
 			case 0xA2:{					//Rol.Ki
 				memcpy(&temp.c[0],&HC05.RxData[2],4);		
-				x_PendPID.Ki = temp.f;
-				HC05printf(&HC05," x_PendPID.Ki = %f\r\n",x_PendPID.Ki);				
+				StaRol_PID.Ki = temp.f;
+				HC05printf(&HC05," StaRol_PID.Ki = %f\r\n",StaRol_PID.Ki);				
 				break;
 			}
 			case 0xA3:{					//Rol.Kd
 				memcpy(&temp.c[0],&HC05.RxData[2],4);		
-				x_PendPID.Kd = temp.f;
-				HC05printf(&HC05," x_PendPID.Kd = %f\r\n",x_PendPID.Kd);
+				StaRol_PID.Kd = temp.f;
+				HC05printf(&HC05," StaRol_PID.Kd = %f\r\n",StaRol_PID.Kd);
 				break;
 			}
 			
 			case 0xA4:{					//Pitch.Kp
 				memcpy(&temp.c[0],&HC05.RxData[2],4);		
-				y_PendPID.Kp = temp.f;
-				HC05printf(&HC05," y_PendPID.Kp = %f\r\n",y_PendPID.Kp);
+				StaPitch_PID.Kp = temp.f;
+				HC05printf(&HC05," StaPitch_PID.Kp = %f\r\n",StaPitch_PID.Kp);
 				break;
 			}
 			case 0xA5:{					//Pitch.Ki
 				memcpy(&temp.c[0],&HC05.RxData[2],4);		
-				y_PendPID.Ki = temp.f;
-				HC05printf(&HC05," y_PendPID.Ki = %f\r\n",y_PendPID.Ki);
+				StaPitch_PID.Ki = temp.f;
+				HC05printf(&HC05," StaPitch_PID.Ki = %f\r\n",StaPitch_PID.Ki);
 				break;
 			}
 			case 0xA6:{					//Pitch.Kd
 				memcpy(&temp.c[0],&HC05.RxData[2],4);		
-				y_PendPID.Kd = temp.f;
-				HC05printf(&HC05," y_PendPID.Kd = %f\r\n",y_PendPID.Kd);
+				StaPitch_PID.Kd = temp.f;
+				HC05printf(&HC05," StaPitch_PID.Kd = %f\r\n",StaPitch_PID.Kd);
 				break;
 			}
 		}
@@ -240,9 +254,15 @@ void DetectCmd(void){
 void Motor_Stop(void)
 {
 	MotorStart = DISABLE;
-	PIDParamInit(&x_PendPID);
-	PIDParamInit(&y_PendPID);
+	PIDParamInit(&StaRol_PID);
+	PIDParamInit(&StaRol_PID);
 	
+	PIDParamInit(&SigPitch_PID);
+	PIDParamInit(&SigRol_PID);
+	
+	PIDParamInit(&DobPitch_PID);
+	PIDParamInit(&DobRol_PID);
+
 	TIM4->CCR1 = 1;		//设置占空比ZKB
 	TIM4->CCR2 = 1;
 	TIM4->CCR3 = 1;
