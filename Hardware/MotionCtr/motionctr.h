@@ -48,7 +48,7 @@ typedef struct {
 extern MotionCtrStr MontionControl;		//运动控制结构体
 /* extern function------------------------------------------------------------*/
 void MotionCtrParamInit(MotionCtrStr * MotionCtrl);		//参数初始化
-extern void SinglePendCtrl(float RolCule,float PitchCule,u16 Tick);		//单摆模式下的控制函数
+extern void SinglePendCtrl(float RolCule,float PitchCule);		//单摆模式下的控制函数
 extern void DoublePendCtrl(float RolCule,float PitchCule,u16 Tick);			//圆锥摆模式下的控制函数
 extern void StablePlotCtrl(float RolCule,float PitchCule,u16 Tick);		//稳定点模式下的控制函数
 extern void TrackedCtrl(float RolCule,float PitchCule,u16 Tick);			//轨迹跟踪模式下的控制函数

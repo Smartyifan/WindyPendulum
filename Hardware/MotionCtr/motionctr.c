@@ -11,13 +11,16 @@
   ******************************************************************************
   */  
 #include "MotionCtr/motionctr.h"
+#include <math.h>
 /* Includes ------------------------------------------------------------------*/
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
   */
 #include "PID/pid.h"
+#include "PWM/pwm.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
+#define _2Pi  6.28
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 MotionCtrStr MontionControl;		//运动控制结构体
@@ -55,8 +58,48 @@ void MotionCtrParamInit(MotionCtrStr * MotionCtrl){
   *@param   None
   *@retval  None
   */
-void SinglePendCtrl(float Error){
-	  
+void SinglePendCtrl(float RolCule,float PitchCule){
+	static u16 Tick;
+	float Force;		//驱动力
+	/* 改变时间 -------------------------------------------------*/
+	Tick++;
+	if(Tick >= MontionControl.SinglePendParam.Period)Tick = 0;
+	
+	/* 计算驱动力 -----------------------------------------------*/
+	if(MontionControl.SinglePendParam.Period <5){			//周期在5s之内
+		Force = MontionControl.SinglePendParam.Amplitude * sin(Tick*(_2Pi/MontionControl.SinglePendParam.Period));
+	}else{													//周期在5s以上	
+		
+	}
+	
+	
+	switch(MontionControl.SinglePendParam.Pend){
+		case Rol:{
+			if(Force >=0){				//Rol
+			motor4 = 0;
+			motor2 = Force;
+		}else{
+			motor4 = -Force;
+			motor2 = 0;
+		}
+			break;
+		}
+		case Pitch:{
+		if(Force >= 0){			//Pitch
+			motor3 = 0;
+			motor1 = Force;
+		}else{
+			motor3 = -Force;
+			motor1 = 0;
+		}
+
+			break;
+		}
+	}
+	
+	/* 根据motor值驱动电机 -------------------------*/
+	PWM_SET(motor1,motor2,motor3,motor4);
+
 }
 
 
@@ -65,7 +108,7 @@ void SinglePendCtrl(float Error){
   *@param   None
   *@retval    None
   */
-void DoublePendCtrl(float Error){
+void DoublePendCtrl(float RolCule,float PitchCule,u16 Tick){
 
 }
 
@@ -74,7 +117,7 @@ void DoublePendCtrl(float Error){
   *@param   None
   *@retval    None
   */
-void StablePlotCtrl(float Error){
+void StablePlotCtrl(float RolCule,float PitchCule,u16 Tick){
 
 }
 
@@ -84,7 +127,7 @@ void StablePlotCtrl(float Error){
   *@param   None
   *@retval    None
   */
-void TrackedCtrl(float Error){
+void TrackedCtrl(float RolCule,float PitchCule,u16 Tick){
 	
 }
 /******************* (C) COPYRIGHT 2014 STMicroelectronics *****END OF FILE****/
