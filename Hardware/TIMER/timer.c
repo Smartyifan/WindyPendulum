@@ -8,16 +8,18 @@
 #include "delay/delay.h"
 #include "MotionCtr/motionctr.h"
 
-float x_TargetAngle=0.0,y_TargetAngle=0.0;		//在实际应用时，这两个值是全局变量，有外围设备发送给动力摆，所以移植时，注意这两个值的来源
 //定时器3中断服务程序,每5ms进入一次定时器中断
 void TIM3_IRQHandler(void)
 { 	
 	if(TIM3->SR&0X0001)//溢出中断
-	{			
-		MontionControl.CtrlFun();  
+	{
+		if(MontionControl.MotionMode == SinglePend || MontionControl.MotionMode == SinglePend)
+			(*MontionControl.CtrlFun)(0,0);		//单摆或双摆控制函数
+// 		MontionControl.CtrlFun();  
 	}
 	TIM3->SR&=~(1<<0);		//清除中断标志位 
 }
+
 //通用定时器中断初始化
 //这里时钟选择为APB1的2倍，而APB1为36M
 //arr：自动重装值。

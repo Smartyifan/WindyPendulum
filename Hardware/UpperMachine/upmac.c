@@ -94,6 +94,7 @@ void DetectCmd(void){
 			/* 控制类指令-------------------------------------------*/
 			case 0x51: {				//停止电机
 				Motor_Stop();
+				MontionControl.MotionMode = Stop;
 				HC05printf(&HC05," Motor_Stop\r\n");
 				break;
 			}
@@ -115,13 +116,11 @@ void DetectCmd(void){
 			}
 			case 0x55:{					//单摆Rol模式
 				MontionControl.SinglePendParam.Pend = Rol;
-				pSigPeakValue = & SigRol_PID.PeakValue;
 				HC05printf(&HC05," SinglePend Mode in Rol...\r\n");
 				break;
 			}
 			case 0x56:{					//单摆Pitch模式
 				MontionControl.SinglePendParam.Pend = Pitch;
-				pSigPeakValue = & SigPitch_PID.PeakValue;
 				HC05printf(&HC05," SinglePend Mode in Pitch...\r\n");
 				break;
 			}

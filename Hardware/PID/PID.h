@@ -27,9 +27,7 @@ typedef struct PIDStruct{
     float Pout;
     float Iout;
     float Dout;
-    
-	float PeakValue;	//单摆或双摆的峰值
-	
+    	
     float PIDout;		//PIDout
     float PIDout_H;		//PIDout阈值限制
     float PIDout_L;

@@ -52,8 +52,6 @@ void PIDParamInit(PIDStruct * PID){
     PID->error[0] = 0;	//清空偏差数组
 	PID->error[1] = 0;
     PID->error[2] = 0;
-	/* PeakValue Init --------*/
-	PID->PeakValue = 0;
 }
 
 /**
@@ -105,10 +103,10 @@ void PIDGetError(PIDStruct * PID,float error){
 s16 motor1=0,motor2=0,motor3=0,motor4=0;
 void PIDControl(void){
 	//计算每个电机的PWM变化是升高还是降低//代码移植时要改动
-	motor1 = TIM4->CCR1 -((s16)(y_PendPID.PIDout));
-	motor2 = TIM4->CCR2 -((s16)(x_PendPID.PIDout));
-	motor3 = TIM4->CCR3 +((s16)(y_PendPID.PIDout));
-	motor4 = TIM4->CCR4 +((s16)(x_PendPID.PIDout));
+	motor1 = TIM4->CCR1 -((s16)(StaPitch_PID.PIDout));
+	motor2 = TIM4->CCR2 -((s16)(StaRol_PID.PIDout));
+	motor3 = TIM4->CCR3 +((s16)(StaPitch_PID.PIDout));
+	motor4 = TIM4->CCR4 +((s16)(StaRol_PID.PIDout));
 
 	PWM_SET(motor1,motor2,motor3,motor4);
 }

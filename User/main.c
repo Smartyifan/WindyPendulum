@@ -51,20 +51,20 @@ void ParamSet(){
 	JY901.USARTBASE = USART2;   //蓝牙陀螺仪即JY901波特率为115200时，输出速率为100HZ,波特率为9600时，输出速率为20HZ
 
 	/* x_PendPID ----------------------------------*/
-	x_PendPID.Kp = 0;	    //Kp---OK	0.85-0.90
-	x_PendPID.Ki = 0;			//Ki
-	x_PendPID.Kd = 0;			//Kd        0.1-1.0
+	StaRol_PID.Kp = 0;	    //Kp---OK	0.85-0.90
+	StaRol_PID.Ki = 0;			//Ki
+	StaRol_PID.Kd = 0;			//Kd        0.1-1.0
 // 	x_PendPID.PIDout_H = 10;    //PID计算值输出限制
 // 	x_PendPID.PIDout_L = -10;   //PID计算值输出限制
-	PIDParamInit(&x_PendPID);	//清空输出
+	PIDParamInit(&StaRol_PID);	//清空输出
 
 	/* y_PendPID ---------------------------------*/
-	y_PendPID.Kp = 0;
-	y_PendPID.Ki = 0;
-	y_PendPID.Kd = 0;
+	StaPitch_PID.Kp = 0;
+	StaPitch_PID.Ki = 0;
+	StaPitch_PID.Kd = 0;
 // 	y_PendPID.PIDout_H = 10;
 // 	y_PendPID.PIDout_L = -10;     //PID计算值输出限制
-	PIDParamInit(&y_PendPID);
+	PIDParamInit(&StaPitch_PID);
 	
 	/* 运动参数设置 ----------------------------*/
 	MotionCtrParamInit(&MontionControl);	
@@ -106,7 +106,7 @@ void Initial()
 	delay_ms(10);						
 	/* 定时器中断初始化 ---------------------------------*/
 	//用于定时查看PIDout，使用HC-05发送至XJI魔幻上位机画图
- 	Timer3_Init(5000,720);	//定时器3初始化 T = (720*5000)/72 000 000 = 50 ms
+ 	Timer3_Init(2000,720);	//定时器3初始化 T = (720*2000)/72 000 000 = 20 ms--50Hz
 }
 
 /**

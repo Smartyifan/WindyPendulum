@@ -29,6 +29,8 @@
 #include "TIMER/timer.h"
 #include "LED/led.h"
 #include "PWM/pwm.h"
+#include "MotionCtr/motionctr.h"
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -110,8 +112,6 @@ void USART2_IRQHandler(void){
   */
 u16 i=0;  
 void DMA1_Channel6_IRQHandler(void){
-	/* 定义x,y角度的偏差量--------------------------------------------------------------------*/
-	float x_CurrentError,y_CurrentError;      //目标值减去实际角度值（已减去零漂）
    
 	static float RolZeroDirftAll=0,PitchZeroDirftAll=0;//零漂累计变量
 		
@@ -119,7 +119,7 @@ void DMA1_Channel6_IRQHandler(void){
 	if(DMA_GetITStatus(DMA1_IT_TC6) == SET){	
 
 		/* Use JY-901 ----------------------------------------------------------------------*/
-		memcpy(&(JY901.Ax),&JY901.RxData[1],8);		//加速度
+		memcpy(&(JY901.Ax),&JY901.RxData[1],6);		//加速度
 		memcpy(&(JY901.Wx),&JY901.RxData[12],6);	//角速度
 		memcpy(&(JY901.Ang),&JY901.RxData[23],6);	//角度	
 		
@@ -178,67 +178,25 @@ void DMA1_Channel6_IRQHandler(void){
 			i++;
 		}
 		
-		/* PID控制-----------------------------------------------------------------------*/
+		
+		/* 基于JY901的控制-----------------------------------------------------------------------*/
 		else if(DetectZeroDrift == DISABLE && DriftDetected == SUCCESS && MotorStart == ENABLE)  //只有当计算偏差计算完成时才启动PID控制
 		{
-			//由硬件仿真可知，PID计算频率大概为51Hz
-			//x_CurrentError =  目标值  -  当前实际值 - 零漂
-			/* 得到偏差角度 --------------------------------------------------------------*/
-			x_CurrentError = x_TargetAngle - JY901.AngCuled.RolCuled + JY901.ZeroDirft.RolZeroDirft;
-			y_CurrentError = y_TargetAngle - JY901.AngCuled.PitchCuled + JY901.ZeroDirft.PitchZeroDirft;
+			/* 当模式为单摆或双摆时，计算摆幅 --------------------------------------------*/
+			if(MontionControl.MotionMode == SinglePend ||  MontionControl.MotionMode == DoublePend){
+				
+				
+				
+			/* 当模式为稳定点时的控制 ----------------------------------------------------*/	
+			}else if(MontionControl.MotionMode == StabelPlot){
+				//稳定点的控制
+				StablePlotCtrl(JY901.AngCuled.RolCuled,JY901.AngCuled.PitchCuled);
+			}
 			
-			/* 计算PIDoout --------------------------------------------------------------*/
-// 			PIDCalculater(&x_PendPID,x_CurrentError);
-// 			PIDCalculater(&y_PendPID,y_CurrentError);
-			/* 计算Pout --------------------------------------------*/
-			x_PendPID.Pout = x_PendPID.Kp * x_CurrentError;			//Rol
-			y_PendPID.Pout = y_PendPID.Kp * y_CurrentError;			//Pitch
-			
-			/* 计算Iout --------------------------------------------*/
-			if(x_CurrentError>-1.5 && x_CurrentError <1.5){			//Rol
-				x_PendPID.Iout += x_PendPID.Ki * x_CurrentError;
-			}else x_PendPID.Iout = 0;
-			
-			if(y_CurrentError>-1.5 && y_CurrentError <1.5){			//Pitch
-				y_PendPID.Iout += y_PendPID.Ki * y_CurrentError;
-			}else y_PendPID.Iout = 0;
-			
-			/* 计算Dout --------------------------------------------*/
-			x_PendPID.Dout = -x_PendPID.Kd * JY901.WxCuled.Rol;		//Rol
-			y_PendPID.Dout = -y_PendPID.Kd * JY901.WxCuled.Pitch;	//Pitch	
-			
-			/* 将PIDout输出至TIM4控制电机 -------------------------------------------------*/
-// 			PIDControl();		
-
-			//Pout 与 Iout 
-			motor1 = TIM4->CCR1 -((s16)(y_PendPID.Pout + y_PendPID.Iout));	
-			motor2 = TIM4->CCR2 -((s16)(x_PendPID.Pout + x_PendPID.Iout));
-			motor3 = TIM4->CCR3 +((s16)(y_PendPID.Pout + y_PendPID.Iout));
-			motor4 = TIM4->CCR4 +((s16)(x_PendPID.Pout + x_PendPID.Iout));
-
-			if(motor1>4800)motor1 = 4800;
-			if(motor2>4800)motor2 = 4800;
-			if(motor3>4800)motor3 = 4800;
-			if(motor4>4800)motor4 = 4800;
-
-			if(motor1<=10)motor1 = 10;
-			if(motor2<=10)motor2 = 10;
-			if(motor3<=10)motor3 = 10;
-			if(motor4<=10)motor4 = 10;
-
-			//Dout
-			motor1 -= y_PendPID.Dout;
-			motor2 -= x_PendPID.Dout;
-			motor3 += y_PendPID.Dout;
-			motor4 += x_PendPID.Dout;
-			
-			PWM_SET(motor1,motor2,motor3,motor4);
-
 			/* 在XJI上位机画出数据图形 ----------------------------------------------------*/
- 			SimplePlotSend(&HC05,JY901.AngCuled.RolCuled,x_CurrentError,JY901.WxCuled.Rol,(float)TIM4->CCR4);		//执行时间 7.92us ≈ 8us
+			SimplePlotSend(&HC05,JY901.AngCuled.RolCuled,StaRol_PID.error[0],JY901.WxCuled.Rol,(float)TIM4->CCR4);		//执行时间 7.92us ≈ 8us
 			
 		}
-		
 		/* 后续处理 ----------------------------------------------------------------------*/
 		USART_ITConfig(JY901.USARTBASE,USART_IT_RXNE,ENABLE);	//打开串口接收中断
 
