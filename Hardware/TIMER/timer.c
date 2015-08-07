@@ -13,7 +13,7 @@ void TIM3_IRQHandler(void)
 { 	
 	if(TIM3->SR&0X0001)//溢出中断
 	{
-		if(MontionControl.MotionMode == SinglePend || MontionControl.MotionMode == SinglePend)
+		if(MontionControl.MotionMode == SinglePend || MontionControl.MotionMode == DoublePend)
 			(*MontionControl.CtrlFun)(0,0);		//单摆或双摆控制函数
 // 		MontionControl.CtrlFun();  
 	}

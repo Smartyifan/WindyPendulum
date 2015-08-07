@@ -194,7 +194,7 @@ void DMA1_Channel6_IRQHandler(void){
 			}
 			
 			/* 在XJI上位机画出数据图形 ----------------------------------------------------*/
-			SimplePlotSend(&HC05,JY901.AngCuled.RolCuled,StaRol_PID.error[0],JY901.WxCuled.Rol,(float)TIM4->CCR4);		//执行时间 7.92us ≈ 8us
+			SimplePlotSend(&HC05,JY901.AngCuled.RolCuled,JY901.AngCuled.PitchCuled,0,0);		//执行时间 7.92us ≈ 8us
 			
 		}
 		/* 后续处理 ----------------------------------------------------------------------*/

@@ -118,7 +118,7 @@ void DetectCmd(void){
 				MontionControl.SinglePendParam.Pend = Rol;
 				HC05printf(&HC05," SinglePend Mode in Rol...\r\n");
 				break;
-			}
+			} 
 			case 0x56:{					//单摆Pitch模式
 				MontionControl.SinglePendParam.Pend = Pitch;
 				HC05printf(&HC05," SinglePend Mode in Pitch...\r\n");
@@ -145,16 +145,16 @@ void DetectCmd(void){
 			
 			/* 运动类指令 --------------------------------------------*/
 			/* 单摆运动 -----------------------------*/
-			case 0xB1:{									//单摆摆幅	
+			case 0xB1:{									//单摆周期
 				memcpy(&temp.c[0],&HC05.RxData[2],4);		
-				MontionControl.SinglePendParam.Amplitude = temp.f;
-				HC05printf(&HC05," Amplitude = %f\r\n",MontionControl.SinglePendParam.Amplitude);
+				MontionControl.SinglePendParam.Period = temp.f;
+				HC05printf(&HC05," Period = %f\r\n",MontionControl.SinglePendParam.Period);
 				break;
 			}
 			case 0xB2:{
-				memcpy(&temp.c[0],&HC05.RxData[2],4);	//单摆周期	
-				MontionControl.SinglePendParam.Period = temp.f;
-				HC05printf(&HC05," Preiod = %f\r\n",MontionControl.SinglePendParam.Period);
+				memcpy(&temp.c[0],&HC05.RxData[2],4);	//单摆摆幅	
+				MontionControl.SinglePendParam.Amplitude = temp.f;
+				HC05printf(&HC05," Amplitude = %f\r\n",MontionControl.SinglePendParam.Amplitude);
 				break;
 			}
 			
