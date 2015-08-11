@@ -73,7 +73,7 @@ ErrorStatus HC05Init(HC05Str * HC05){
 
 	
 // 	HC05GPIOInit(HC05);
-	HC05UartInit(HC05->USARTBASE,9600);		//初始化中断
+	HC05UartInit(HC05->USARTBASE,230400);		//初始化中断
 	
 	/* DMA初始化 ---------------------------------------------------*/
 	#if HC05TxDMA	//若使能TxDMA传输	
@@ -256,8 +256,8 @@ void HC05RxNVICInit(USART_TypeDef * USARTBASE){
 	
 	/* NVIC初始化 -------------------------------------------------------------*/
 	NVIC_InitStructure.NVIC_IRQChannel = IRQChannel;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;		//抢占优先级1
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2; 				//子优先级0
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;		//抢占优先级1
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0; 				//子优先级0
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;					//使能中断号
 	NVIC_Init(&NVIC_InitStructure);									//初始化NVIC
 }

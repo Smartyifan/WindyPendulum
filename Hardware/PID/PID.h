@@ -33,9 +33,9 @@ typedef struct PIDStruct{
     float PIDout_L;
 }PIDStruct;
 /* extern variable ----------------------------------------------------------*/
-extern PIDStruct SigRol_PID,SigPitch_PID;		//单摆PID控制结构体
-extern PIDStruct DobRol_PID,DobPitch_PID;		//双摆PID控制结构体
-extern PIDStruct StaRol_PID,StaPitch_PID;		//稳定点PID控制结构体
+extern PIDStruct RolpPendPID,RolnPendPID;		//单摆PID控制结构体
+extern PIDStruct PitchpPendPID,PitchnPendPID;
+
 extern s16 motor1,motor2,motor3,motor4;			//电机
 extern float * pSigPeakValue;					//峰值指针
 /*extern function-------------------------------------------------------------*/

@@ -15,7 +15,6 @@ void TIM3_IRQHandler(void)
 	{
 		if(MontionControl.MotionMode == SinglePend || MontionControl.MotionMode == DoublePend)
 			(*MontionControl.CtrlFun)(0,0);		//单摆或双摆控制函数
-// 		MontionControl.CtrlFun();  
 	}
 	TIM3->SR&=~(1<<0);		//清除中断标志位 
 }
@@ -28,7 +27,7 @@ void TIM3_IRQHandler(void)
 void Timer3_Init(u16 arr,u16 psc)
 {
 	RCC->APB1ENR|=1<<1;//TIM3时钟使能    
- 	TIM3->ARR=arr-1;  //设定计数器自动重装值//刚好1ms    
+ 	TIM3->ARR=arr-1;  //设定计数器自动重装值   
 	TIM3->PSC=psc-1;  //预分频器
 	TIM3->DIER|=1<<0;   //允许更新中断				  
 	TIM3->CR1|=0x01;    //使能定时器3

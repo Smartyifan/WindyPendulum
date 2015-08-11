@@ -45,6 +45,11 @@ typedef struct{
 		short z;
 	}Wx;
 	
+	float Rol[3];		//这四个数组用于测量摆幅
+	float Pitch[3];
+	float dRol[2];	
+	float dPitch[2];
+	
 	struct {			//角度
 		short Rol;		//横滚
 		short Pitch;	//俯仰

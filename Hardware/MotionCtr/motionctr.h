@@ -25,13 +25,18 @@ typedef struct {
 	
 	void (*CtrlFun) (float,float);		//控制函数	
 	
-	float Rol_Amplitude;		//测量的Rol摆幅
-	float Pitch_Amplitude;		//测量的Pitch摆幅
+	float Rolp_Amplitude;		//测量Rol正摆幅
+	float Roln_Amplitude;		//测量Rol负摆幅
+	float Pitchp_Amplitude;		//测量Pitch正摆幅
+	float Pitchn_Amplitude;		//测量Pitch负摆幅
 	
 	struct {					//单摆参数
-		SinglePendSel Pend;		//摆动轴
-		float Period;			//周期
+		float Angle;			//与x轴的角度
 		float Amplitude;		//摆幅
+		float RolPeriod;		//Rol周期
+		float RolAmplitude;		//Rol摆幅
+		float PitchPeriod;		//Pitch周期
+		float PitchAmplitude;	//Pitch摆幅
 	}SinglePendParam;
 	
 	struct{						//双摆参数

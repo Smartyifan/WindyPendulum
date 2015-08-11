@@ -50,21 +50,16 @@ void ParamSet(){
 	/* MPU6050 ------------------------------------*/
 	JY901.USARTBASE = USART2;   //蓝牙陀螺仪即JY901波特率为115200时，输出速率为100HZ,波特率为9600时，输出速率为20HZ
 
-	/* x_PendPID ----------------------------------*/
-	StaRol_PID.Kp = 0;	    //Kp---OK	0.85-0.90
-	StaRol_PID.Ki = 0;			//Ki
-	StaRol_PID.Kd = 0;			//Kd        0.1-1.0
-// 	x_PendPID.PIDout_H = 10;    //PID计算值输出限制
-// 	x_PendPID.PIDout_L = -10;   //PID计算值输出限制
-	PIDParamInit(&StaRol_PID);	//清空输出
-
 	/* y_PendPID ---------------------------------*/
-	StaPitch_PID.Kp = 0;
-	StaPitch_PID.Ki = 0;
-	StaPitch_PID.Kd = 0;
-// 	y_PendPID.PIDout_H = 10;
-// 	y_PendPID.PIDout_L = -10;     //PID计算值输出限制
-	PIDParamInit(&StaPitch_PID);
+	RolpPendPID.Kp = 0.3;
+	RolnPendPID.Kp = 0.3;
+	PitchpPendPID.Kp = 0.3;
+	PitchnPendPID.Kp = 0.3;
+	
+	PIDParamInit(&RolpPendPID);
+	PIDParamInit(&RolnPendPID);
+	PIDParamInit(&PitchpPendPID);
+	PIDParamInit(&PitchnPendPID);
 	
 	/* 运动参数设置 ----------------------------*/
 	MotionCtrParamInit(&MontionControl);	

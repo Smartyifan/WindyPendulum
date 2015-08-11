@@ -14,6 +14,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x.h"
 #include <string.h>
+#include <math.h>
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
   */
@@ -26,6 +27,7 @@
 #include "PID/pid.h"
 #include "TIMER/timer.h"
 #include "MotionCtr/motionctr.h"
+#include "PWM/pwm.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -114,16 +116,16 @@ void DetectCmd(void){
 				HC05printf(&HC05," SinglePend Mode...\r\n");
 				break;
 			}
-			case 0x55:{					//单摆Rol模式
-				MontionControl.SinglePendParam.Pend = Rol;
-				HC05printf(&HC05," SinglePend Mode in Rol...\r\n");
-				break;
-			} 
-			case 0x56:{					//单摆Pitch模式
-				MontionControl.SinglePendParam.Pend = Pitch;
-				HC05printf(&HC05," SinglePend Mode in Pitch...\r\n");
-				break;
-			}
+// 			case 0x55:{					//单摆Rol模式
+// 				MontionControl.SinglePendParam.Pend = Rol;
+// 				HC05printf(&HC05," SinglePend Mode in Rol...\r\n");
+// 				break;
+// 			} 
+// 			case 0x56:{					//单摆Pitch模式
+// 				MontionControl.SinglePendParam.Pend = Pitch;
+// 				HC05printf(&HC05," SinglePend Mode in Pitch...\r\n");
+// 				break;
+// 			}
 			case 0x57:{					//双摆模式
 				MontionControl.MotionMode = DoublePend;
 				MontionControl.CtrlFun = DoublePendCtrl;
@@ -147,17 +149,30 @@ void DetectCmd(void){
 			/* 单摆运动 -----------------------------*/
 			case 0xB1:{									//单摆周期
 				memcpy(&temp.c[0],&HC05.RxData[2],4);		
-				MontionControl.SinglePendParam.Period = temp.f;
-				HC05printf(&HC05," Period = %f\r\n",MontionControl.SinglePendParam.Period);
+				MontionControl.SinglePendParam.RolPeriod = MontionControl.SinglePendParam.PitchPeriod = temp.f;
+				HC05printf(&HC05," Period = %f\r\n",MontionControl.SinglePendParam.RolPeriod);
 				break;
 			}
-			case 0xB2:{
-				memcpy(&temp.c[0],&HC05.RxData[2],4);	//单摆摆幅	
+			case 0xB2:{									//单摆摆幅	
+				memcpy(&temp.c[0],&HC05.RxData[2],4);	
 				MontionControl.SinglePendParam.Amplitude = temp.f;
-				HC05printf(&HC05," Amplitude = %f\r\n",MontionControl.SinglePendParam.Amplitude);
+				MontionControl.SinglePendParam.RolAmplitude =	MontionControl.SinglePendParam.Amplitude	*	
+																					cos(MontionControl.SinglePendParam.Angle);
+				MontionControl.SinglePendParam.PitchAmplitude =	MontionControl.SinglePendParam.Amplitude	*	
+																					sin(MontionControl.SinglePendParam.Angle);
+				HC05printf(&HC05," Amplitude = %f\r\n",temp.f);
 				break;
 			}
-			
+			case 0xB3:{									//单摆角度
+				memcpy(&temp.c[0],&HC05.RxData[2],4);	
+				MontionControl.SinglePendParam.Angle = temp.f;
+				MontionControl.SinglePendParam.RolAmplitude =	MontionControl.SinglePendParam.Amplitude	*	
+																					cos(MontionControl.SinglePendParam.Angle);
+				MontionControl.SinglePendParam.PitchAmplitude =	MontionControl.SinglePendParam.Amplitude	*	
+																					sin(MontionControl.SinglePendParam.Angle);
+				HC05printf(&HC05," Angle = %f\r\n",MontionControl.SinglePendParam.Angle);
+				break;
+			}
 			/* 双摆运动 --------------------------*/
 			case 0xC1:{									//Rol周期
 				memcpy(&temp.c[0],&HC05.RxData[2],4);		
@@ -197,46 +212,8 @@ void DetectCmd(void){
 				HC05printf(&HC05," StablePitchExpect = %f\r\n",MontionControl.StableParam.PitchExpect);
 				break;
 			}
-			
-			
+					
 			/* 调参类指令 --------------------------------------------*/
-			case 0xA1:{					//Rol.Kp
-				memcpy(&temp.c[0],&HC05.RxData[2],4);		//拷贝数组
-				StaRol_PID.Kp = temp.f;
-				HC05printf(&HC05," StaRol_PID.Kp = %f\r\n",StaRol_PID.Kp);
-				break;
-			}
-			case 0xA2:{					//Rol.Ki
-				memcpy(&temp.c[0],&HC05.RxData[2],4);		
-				StaRol_PID.Ki = temp.f;
-				HC05printf(&HC05," StaRol_PID.Ki = %f\r\n",StaRol_PID.Ki);				
-				break;
-			}
-			case 0xA3:{					//Rol.Kd
-				memcpy(&temp.c[0],&HC05.RxData[2],4);		
-				StaRol_PID.Kd = temp.f;
-				HC05printf(&HC05," StaRol_PID.Kd = %f\r\n",StaRol_PID.Kd);
-				break;
-			}
-			
-			case 0xA4:{					//Pitch.Kp
-				memcpy(&temp.c[0],&HC05.RxData[2],4);		
-				StaPitch_PID.Kp = temp.f;
-				HC05printf(&HC05," StaPitch_PID.Kp = %f\r\n",StaPitch_PID.Kp);
-				break;
-			}
-			case 0xA5:{					//Pitch.Ki
-				memcpy(&temp.c[0],&HC05.RxData[2],4);		
-				StaPitch_PID.Ki = temp.f;
-				HC05printf(&HC05," StaPitch_PID.Ki = %f\r\n",StaPitch_PID.Ki);
-				break;
-			}
-			case 0xA6:{					//Pitch.Kd
-				memcpy(&temp.c[0],&HC05.RxData[2],4);		
-				StaPitch_PID.Kd = temp.f;
-				HC05printf(&HC05," StaPitch_PID.Kd = %f\r\n",StaPitch_PID.Kd);
-				break;
-			}
 		}
 	}else return;
 }
@@ -252,25 +229,28 @@ void DetectCmd(void){
   */
 void Motor_Stop(void)
 {
+	//电机停止模式
 	MotorStart = DISABLE;
-	PIDParamInit(&StaRol_PID);
-	PIDParamInit(&StaRol_PID);
+	//运动停止模式
+	MontionControl.MotionMode = Stop;
 	
-	PIDParamInit(&SigPitch_PID);
-	PIDParamInit(&SigRol_PID);
-	
-	PIDParamInit(&DobPitch_PID);
-	PIDParamInit(&DobRol_PID);
+	//初始化PID参数	
+	PIDParamInit(&RolpPendPID);
+	PIDParamInit(&RolnPendPID);
+	PIDParamInit(&PitchpPendPID);
+	PIDParamInit(&PitchnPendPID);
 
-	TIM4->CCR1 = 1;		//设置占空比ZKB
-	TIM4->CCR2 = 1;
-	TIM4->CCR3 = 1;
-	TIM4->CCR4 = 1;
-	TIM4->CCER &=~(1<<0);			//使能Timer4 PWM输出禁止
-	TIM4->CCER &=~(1<<4);
-	TIM4->CCER &=~(1<<8);
-	TIM4->CCER &=~(1<<12);
-	TIM4->CR1&=~(1<<0);        //关闭定时器4
+	//油门调整为0
+	PWM_SET(0,0,0,0);
+// 	TIM4->CCR1 = 1000;		//设置占空比ZKB
+// 	TIM4->CCR2 = 1000;
+// 	TIM4->CCR3 = 1000;
+// 	TIM4->CCR4 = 1000;
+// 	TIM4->CCER &=~(1<<0);			//使能Timer4 PWM输出禁止
+// 	TIM4->CCER &=~(1<<4);
+// 	TIM4->CCER &=~(1<<8);
+// 	TIM4->CCER &=~(1<<12);
+// 	TIM4->CR1&=~(1<<0);        //关闭定时器4
 }
 
 
@@ -282,11 +262,11 @@ void Motor_Stop(void)
 void Motor_Start_Up(void)
 {
 	MotorStart = ENABLE;
-	TIM4->CCER |= 1<<0;			//使能Timer4 PWM输出
-	TIM4->CCER |= 1<<4;
-	TIM4->CCER |= 1<<8;
-	TIM4->CCER |= 1<<12;
-	TIM4->CR1|=0x0001;   //打开定时器4，开始输出PWM波
+// 	TIM4->CCER |= 1<<0;			//使能Timer4 PWM输出
+// 	TIM4->CCER |= 1<<4;
+// 	TIM4->CCER |= 1<<8;
+// 	TIM4->CCER |= 1<<12;
+// 	TIM4->CR1|=0x0001;   //打开定时器4，开始输出PWM波
 }
 
 /**

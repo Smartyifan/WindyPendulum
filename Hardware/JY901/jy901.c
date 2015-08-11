@@ -41,6 +41,7 @@ ErrorStatus DriftDetected = ERROR;			//零漂检测完成
 FunctionalState MotorStart = DISABLE;       //电机启动与否
 
 /* Private function prototypes -----------------------------------------------*/
+void AnlgeSlide(float (*angle)[3],float newangle);
 void UARTRxDMARec(JY901Str * JY901);							//开启一次DMA接收
 void JY901UartInit(USART_TypeDef * USARTBASE,u32 BaudRate);		//串口初始化
 void UARTRxNVICInit(USART_TypeDef * USARTBASE);					//串口的NVIC设置
@@ -130,15 +131,14 @@ void DMA1_Channel6_IRQHandler(void){
 		/* 显示角度 ------------------------------------------------------------------------*/
 
 		/* 带条件的角度转换-----------------------------------------------------------------------*/
-		if(abs(JY901.Ang.Rol) > 273 && abs(JY901.Ang.Rol <13653))		JY901.AngCuled.RolCuled = (float)JY901.Ang.Rol/32768*180;
-		if(abs(JY901.Ang.Pitch) > 273 && abs(JY901.Ang.Pitch <13653)) 	JY901.AngCuled.PitchCuled = (float)JY901.Ang.Pitch/32768*180; 
+		JY901.AngCuled.RolCuled = (float)JY901.Ang.Rol/32768*180;
+		JY901.AngCuled.PitchCuled = (float)JY901.Ang.Pitch/32768*180; 
 
 		/* 角速度转换 --------------------------------------------------------------------*/
-		JY901.WxCuled.Rol = (float)JY901.Wx.x/32768*2000;
-		JY901.WxCuled.Pitch = (float)JY901.Wx.y/32768*2000;
+// 		JY901.WxCuled.Rol = (float)JY901.Wx.x/32768*2000;
+// 		JY901.WxCuled.Pitch = (float)JY901.Wx.y/32768*2000;
 		
 		/* 零漂计算-----------------------------------------------------------------------*/
-		/*CuledFlag为0时偏差未计算完成，为1时表示偏差计算完成*/
 		if(DetectZeroDrift == ENABLE) 
 		{
 			if(i == ZeroDirftCulNum) //计算偏差值值
@@ -163,7 +163,6 @@ void DMA1_Channel6_IRQHandler(void){
 				HC05printf(&HC05,"Calculate Success ...\r\nRolZeroDirft = %f\r\nPitchZeroDirft = %f\r\n",
 													JY901.ZeroDirft.RolZeroDirft,	JY901.ZeroDirft.PitchZeroDirft);
 				/* -----------------------------------------------------------------------------------------------*/
-
 			}
 			else 
 			{
@@ -182,10 +181,46 @@ void DMA1_Channel6_IRQHandler(void){
 		/* 基于JY901的控制-----------------------------------------------------------------------*/
 		else if(DetectZeroDrift == DISABLE && DriftDetected == SUCCESS && MotorStart == ENABLE)  //只有当计算偏差计算完成时才启动PID控制
 		{
-			/* 当模式为单摆或双摆时，计算摆幅 --------------------------------------------*/
+			/* 当模式为单摆或双摆时，计算摆幅，并调整控制量峰值 --------------------------*/
 			if(MontionControl.MotionMode == SinglePend ||  MontionControl.MotionMode == DoublePend){
+				/* 滑动角度 --------------------------------------------*/
+				AnlgeSlide(&JY901.Rol,JY901.AngCuled.RolCuled-JY901.ZeroDirft.RolZeroDirft);		//Rol
+				AnlgeSlide(&JY901.Pitch,JY901.AngCuled.PitchCuled-JY901.ZeroDirft.PitchZeroDirft);	//Pitch
 				
+				//计算角速度
+				JY901.dRol[1] = JY901.dRol[0];					//Rol
+				JY901.dRol[0] = JY901.Rol[0]-JY901.Rol[1];
+				JY901.dPitch[1] = JY901.dPitch[0];				//Pitch
+				JY901.dPitch[0] = JY901.Pitch[0] - JY901.Pitch[1]; 
 				
+				/* 判断摆幅并根据摆幅改变一次PIDout -------------------------------------*/
+				if(JY901.Rol[1] > 0){										//Rol
+					if(JY901.dRol[0]<=0	&&	JY901.dRol[1]>=0){
+						MontionControl.Rolp_Amplitude = JY901.Rol[1];		//Rol正摆幅
+						RolpPendPID.PIDout += RolpPendPID.Kp * 
+												(MontionControl.SinglePendParam.RolAmplitude - MontionControl.Rolp_Amplitude);	//Rol
+					}
+				}else if(JY901.Rol[1] < 0){
+					if(JY901.dRol[0]>=0	&&	JY901.dRol[1]<=0){
+						MontionControl.Roln_Amplitude = JY901.Rol[1];		//Rol负摆幅
+						RolnPendPID.PIDout += RolnPendPID.Kp * 
+												(MontionControl.SinglePendParam.RolAmplitude + MontionControl.Roln_Amplitude);
+					}
+				}
+				
+				if(JY901.Pitch[1] > 0){										//Pitch
+					if(JY901.dPitch[0]<=0   &&   JY901.dPitch[1]>=0){
+						MontionControl.Pitchp_Amplitude = JY901.Pitch[1];	//Pitch正摆幅
+						PitchpPendPID.PIDout += PitchpPendPID.Kp * 
+													(MontionControl.SinglePendParam.PitchAmplitude - MontionControl.Pitchp_Amplitude);	//Pitch
+					} 
+				}else if(JY901.Pitch[1] < 0){
+					if(JY901.dPitch[0]>=0   &&	JY901.dPitch[1]<=0){
+						MontionControl.Pitchn_Amplitude = JY901.Pitch[1];	//Pitch负摆幅
+						PitchnPendPID.PIDout += PitchnPendPID.Kp * 
+													(MontionControl.SinglePendParam.PitchAmplitude + MontionControl.Pitchn_Amplitude);
+					}
+				}
 				
 			/* 当模式为稳定点时的控制 ----------------------------------------------------*/	
 			}else if(MontionControl.MotionMode == StabelPlot){
@@ -194,7 +229,7 @@ void DMA1_Channel6_IRQHandler(void){
 			}
 			
 			/* 在XJI上位机画出数据图形 ----------------------------------------------------*/
-			SimplePlotSend(&HC05,JY901.AngCuled.RolCuled,JY901.AngCuled.PitchCuled,0,0);		//执行时间 7.92us ≈ 8us
+			SimplePlotSend(&HC05,JY901.AngCuled.RolCuled-JY901.ZeroDirft.RolZeroDirft,MontionControl.Rolp_Amplitude,MontionControl.Roln_Amplitude,0);		//执行时间 7.92us ≈ 8us
 			
 		}
 		/* 后续处理 ----------------------------------------------------------------------*/
@@ -206,6 +241,19 @@ void DMA1_Channel6_IRQHandler(void){
 	}
 	
 }
+
+/**
+  *@brief   AnlgeSlide	角度滑动函数
+  *@param	None
+  *@retval	None
+  */
+void AnlgeSlide(float (*angle)[3],float newangle){
+	(*angle)[2] = (*angle)[1];
+	(*angle)[1] = (*angle)[0];
+	(*angle)[0] = newangle;
+}
+
+
 
 /**
   *@brief   UARTRxDMARec		启动一次串口的DMA传输
@@ -395,7 +443,7 @@ void DMATCNVICInit(DMA_Channel_TypeDef * DMAChannelRx){
 	/* NVIC初始化 -------------------------------------------------------------*/
 	NVIC_InitStructure.NVIC_IRQChannel = IRQChannel;
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;		//抢占优先级1
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0; 				//子优先级2
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2; 				//子优先级2
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;					//使能中断号
 	NVIC_Init(&NVIC_InitStructure);									//初始化NVIC
 }

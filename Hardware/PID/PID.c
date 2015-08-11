@@ -28,9 +28,8 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-PIDStruct SigRol_PID,SigPitch_PID;		//单摆PID控制结构体
-PIDStruct DobRol_PID,DobPitch_PID;			//双摆PID控制结构体
-PIDStruct StaRol_PID,StaPitch_PID;			//稳定点PID控制结构体
+PIDStruct RolpPendPID,RolnPendPID;		//单摆PID控制结构体
+PIDStruct PitchpPendPID,PitchnPendPID;
 
 float * pSigPeakValue = NULL;				//单摆峰值指针
 /* Private function prototypes -----------------------------------------------*/
@@ -42,7 +41,6 @@ void PIDGetError(PIDStruct * PID,float error);
   *@retval  None
   */
 void PIDParamInit(PIDStruct * PID){
-	
 	/* PIDout Init------------*/
 	PID->Pout = 0;
 	PID->Iout = 0;
@@ -103,12 +101,12 @@ void PIDGetError(PIDStruct * PID,float error){
 s16 motor1=0,motor2=0,motor3=0,motor4=0;
 void PIDControl(void){
 	//计算每个电机的PWM变化是升高还是降低//代码移植时要改动
-	motor1 = TIM4->CCR1 -((s16)(StaPitch_PID.PIDout));
-	motor2 = TIM4->CCR2 -((s16)(StaRol_PID.PIDout));
-	motor3 = TIM4->CCR3 +((s16)(StaPitch_PID.PIDout));
-	motor4 = TIM4->CCR4 +((s16)(StaRol_PID.PIDout));
+// 	motor1 = TIM4->CCR1 -((s16)(StaPitch_PID.PIDout));
+// 	motor2 = TIM4->CCR2 -((s16)(StaRol_PID.PIDout));
+// 	motor3 = TIM4->CCR3 +((s16)(StaPitch_PID.PIDout));
+// 	motor4 = TIM4->CCR4 +((s16)(StaRol_PID.PIDout));
 
-	PWM_SET(motor1,motor2,motor3,motor4);
+// 	PWM_SET(motor1,motor2,motor3,motor4);
 }
 
 /******************* (C) COPYRIGHT 2014 STMicroelectronics *****END OF FILE****/
