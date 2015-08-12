@@ -114,8 +114,8 @@ void USART2_IRQHandler(void){
 u16 i=0;  
 void DMA1_Channel6_IRQHandler(void){
    
-	static float RolZeroDirftAll=0,PitchZeroDirftAll=0;//零漂累计变量
-		
+	static float RolZeroDirftAll=0,PitchZeroDirftAll=0;//零漂累计变量	
+	static float amplitude;		//调试参数，可删除
 	
 	if(DMA_GetITStatus(DMA1_IT_TC6) == SET){	
 
@@ -124,10 +124,6 @@ void DMA1_Channel6_IRQHandler(void){
 		memcpy(&(JY901.Wx),&JY901.RxData[12],6);	//角速度
 		memcpy(&(JY901.Ang),&JY901.RxData[23],6);	//角度	
 		
-		/* Use MPU6050 ---------------------------------------------------------------------*/
-// 		memcpy(&(JY901.Ax),&JY901.RxData[1],6);		//加速度
-// 		memcpy(&(JY901.Wx),&JY901.RxData[12],6);	//角速度	
-// 		memcpy(&(JY901.Ang),&JY901.RxData[23],6);	//角度
 		/* 显示角度 ------------------------------------------------------------------------*/
 
 		/* 带条件的角度转换-----------------------------------------------------------------------*/
@@ -196,29 +192,39 @@ void DMA1_Channel6_IRQHandler(void){
 				/* 判断摆幅并根据摆幅改变一次PIDout -------------------------------------*/
 				if(JY901.Rol[1] > 0){										//Rol
 					if(JY901.dRol[0]<=0	&&	JY901.dRol[1]>=0){
-						MontionControl.Rolp_Amplitude = JY901.Rol[1];		//Rol正摆幅
-						RolpPendPID.PIDout += RolpPendPID.Kp * 
-												(MontionControl.SinglePendParam.RolAmplitude - MontionControl.Rolp_Amplitude);	//Rol
+						
+						amplitude = JY901.Rol[1];						//查看幅度
+						
+						MontionControl.eRolp_Amplitude[1] = MontionControl.eRolp_Amplitude[0];
+						MontionControl.eRolp_Amplitude[0] = MontionControl.SinglePendParam.RolAmplitude - JY901.Rol[1];		//Rol正摆幅
+						
+						RolpPendPID.PIDout += RolpPendPID.Kp * (MontionControl.eRolp_Amplitude[0])
+												+RolpPendPID.Kd * (MontionControl.eRolp_Amplitude[0] - MontionControl.eRolp_Amplitude[1]);		//Rol
 					}
 				}else if(JY901.Rol[1] < 0){
-					if(JY901.dRol[0]>=0	&&	JY901.dRol[1]<=0){
-						MontionControl.Roln_Amplitude = JY901.Rol[1];		//Rol负摆幅
-						RolnPendPID.PIDout += RolnPendPID.Kp * 
-												(MontionControl.SinglePendParam.RolAmplitude + MontionControl.Roln_Amplitude);
+					if(JY901.dRol[0]>=0	&&	JY901.dRol[1]<=0){  
+						MontionControl.eRoln_Amplitude[1] = MontionControl.eRoln_Amplitude[0];
+						MontionControl.eRoln_Amplitude[0] = MontionControl.SinglePendParam.RolAmplitude + JY901.Rol[1];		//Rol负摆幅
+						
+						RolnPendPID.PIDout += RolnPendPID.Kp * 	(MontionControl.eRoln_Amplitude[0])
+												+ RolnPendPID.Kd * (MontionControl.eRoln_Amplitude[0] - MontionControl.eRoln_Amplitude[1]);
 					}
 				}
-				
 				if(JY901.Pitch[1] > 0){										//Pitch
 					if(JY901.dPitch[0]<=0   &&   JY901.dPitch[1]>=0){
-						MontionControl.Pitchp_Amplitude = JY901.Pitch[1];	//Pitch正摆幅
-						PitchpPendPID.PIDout += PitchpPendPID.Kp * 
-													(MontionControl.SinglePendParam.PitchAmplitude - MontionControl.Pitchp_Amplitude);	//Pitch
+						MontionControl.ePitchp_Amplitude[1] = MontionControl.ePitchp_Amplitude[0];
+						MontionControl.ePitchp_Amplitude[0] = MontionControl.SinglePendParam.PitchAmplitude - JY901.Pitch[1];	//Pitch正摆幅
+						
+						PitchpPendPID.PIDout += PitchpPendPID.Kp * (MontionControl.ePitchp_Amplitude[0])
+												+PitchpPendPID.Kd * (MontionControl.ePitchp_Amplitude[0] - MontionControl.ePitchp_Amplitude[1]);	//Pitch
 					} 
 				}else if(JY901.Pitch[1] < 0){
 					if(JY901.dPitch[0]>=0   &&	JY901.dPitch[1]<=0){
-						MontionControl.Pitchn_Amplitude = JY901.Pitch[1];	//Pitch负摆幅
-						PitchnPendPID.PIDout += PitchnPendPID.Kp * 
-													(MontionControl.SinglePendParam.PitchAmplitude + MontionControl.Pitchn_Amplitude);
+						MontionControl.ePitchn_Amplitude[1] = MontionControl.ePitchn_Amplitude[0];
+						MontionControl.ePitchn_Amplitude[0] = MontionControl.SinglePendParam.PitchAmplitude + JY901.Pitch[1];	//Pitch负摆幅
+						
+						PitchnPendPID.PIDout += PitchnPendPID.Kp * (MontionControl.ePitchn_Amplitude[0])
+												+PitchnPendPID.Kd * (MontionControl.ePitchn_Amplitude[0] - MontionControl.ePitchn_Amplitude[1]);
 					}
 				}
 				
@@ -229,7 +235,7 @@ void DMA1_Channel6_IRQHandler(void){
 			}
 			
 			/* 在XJI上位机画出数据图形 ----------------------------------------------------*/
-			SimplePlotSend(&HC05,JY901.AngCuled.RolCuled-JY901.ZeroDirft.RolZeroDirft,MontionControl.Rolp_Amplitude,MontionControl.Roln_Amplitude,0);		//执行时间 7.92us ≈ 8us
+			SimplePlotSend(&HC05,JY901.AngCuled.RolCuled-JY901.ZeroDirft.RolZeroDirft,amplitude,0,0);		//执行时间 7.92us ≈ 8us
 			
 		}
 		/* 后续处理 ----------------------------------------------------------------------*/

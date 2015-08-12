@@ -51,15 +51,28 @@ void ParamSet(){
 	JY901.USARTBASE = USART2;   //蓝牙陀螺仪即JY901波特率为115200时，输出速率为100HZ,波特率为9600时，输出速率为20HZ
 
 	/* y_PendPID ---------------------------------*/
-	RolpPendPID.Kp = 0.3;
-	RolnPendPID.Kp = 0.3;
+	RolpPendPID.Kp = 0.8;
+	RolpPendPID.Ki = 0;
+	RolpPendPID.Kd = 2;
+	
+	
+	RolnPendPID.Kp = 0.8;
+	RolnPendPID.Ki = 0;
+	RolnPendPID.Kd = 2;
+	
 	PitchpPendPID.Kp = 0.3;
+	PitchpPendPID.Ki = 0;
+	PitchpPendPID.Kd = 0;
+	
 	PitchnPendPID.Kp = 0.3;
+	PitchnPendPID.Ki = 0;
+	PitchnPendPID.Kd = 0;
 	
 	PIDParamInit(&RolpPendPID);
 	PIDParamInit(&RolnPendPID);
 	PIDParamInit(&PitchpPendPID);
 	PIDParamInit(&PitchnPendPID);
+	 
 	
 	/* 运动参数设置 ----------------------------*/
 	MotionCtrParamInit(&MontionControl);	

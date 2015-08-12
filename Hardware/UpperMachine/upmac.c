@@ -149,8 +149,8 @@ void DetectCmd(void){
 			/* 单摆运动 -----------------------------*/
 			case 0xB1:{									//单摆周期
 				memcpy(&temp.c[0],&HC05.RxData[2],4);		
-				MontionControl.SinglePendParam.RolPeriod = MontionControl.SinglePendParam.PitchPeriod = temp.f;
-				HC05printf(&HC05," Period = %f\r\n",MontionControl.SinglePendParam.RolPeriod);
+				MontionControl.SinglePendParam.Period  = temp.f;
+				HC05printf(&HC05," Period = %f\r\n",MontionControl.SinglePendParam.Period);
 				break;
 			}
 			case 0xB2:{									//单摆摆幅	

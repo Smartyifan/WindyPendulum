@@ -25,17 +25,16 @@ typedef struct {
 	
 	void (*CtrlFun) (float,float);		//控制函数	
 	
-	float Rolp_Amplitude;		//测量Rol正摆幅
-	float Roln_Amplitude;		//测量Rol负摆幅
-	float Pitchp_Amplitude;		//测量Pitch正摆幅
-	float Pitchn_Amplitude;		//测量Pitch负摆幅
+	float eRolp_Amplitude[2];		//测量Rol正摆幅偏差
+	float eRoln_Amplitude[2];		//测量Rol负摆幅偏差
+	float ePitchp_Amplitude[2];		//测量Pitch正摆幅偏差
+	float ePitchn_Amplitude[2];		//测量Pitch负摆幅偏差
 	
 	struct {					//单摆参数
 		float Angle;			//与x轴的角度
 		float Amplitude;		//摆幅
-		float RolPeriod;		//Rol周期
+		float Period;			//周期
 		float RolAmplitude;		//Rol摆幅
-		float PitchPeriod;		//Pitch周期
 		float PitchAmplitude;	//Pitch摆幅
 	}SinglePendParam;
 	
@@ -52,6 +51,8 @@ typedef struct {
 	}StableParam;
 }MotionCtrStr;
 
+/* inline function -----------------------------------------------------------*/
+inline short angle2ZKB(float angle);
 /* extern Variables ----------------------------------------------------------*/
 extern MotionCtrStr MontionControl;		//运动控制结构体
 /* extern function------------------------------------------------------------*/
