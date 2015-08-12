@@ -6,52 +6,32 @@
 #include "UpperMachine/upmac.h"
 #include "JY901/jy901.h"
 #include "delay/delay.h"
+#include "MotionCtr/motionctr.h"
 
-float x_TargetAngle=0.0,y_TargetAngle=0.0;		//ÔÚÊµ¼ÊÓ¦ÓÃÊ±£¬ÕâÁ½¸öÖµÊÇÈ«¾Ö±äÁ¿£¬ÓÐÍâÎ§Éè±¸·¢ËÍ¸ø¶¯Á¦°Ú£¬ËùÒÔÒÆÖ²Ê±£¬×¢ÒâÕâÁ½¸öÖµµÄÀ´Ô´
-//¶¨Ê±Æ÷3ÖÐ¶Ï·þÎñ³ÌÐò,Ã¿5ms½øÈëÒ»´Î¶¨Ê±Æ÷ÖÐ¶Ï
+//å®šæ—¶å™¨3ä¸­æ–­æœåŠ¡ç¨‹åº,æ¯5msè¿›å…¥ä¸€æ¬¡å®šæ—¶å™¨ä¸­æ–­
 void TIM3_IRQHandler(void)
 { 	
-     static u16 _1s,_2s;	
-	if(TIM3->SR&0X0001)//Òç³öÖÐ¶Ï
-	{			
-
-// 		SimplePlotSend(&HC05,x_PendPID.PIDout,y_CurrentError,0,0);
- 		if(_1s == 20)
- 		{
- 			_1s = 0;
-			_2s++;
-			//³ÌÐòÔËÐÐÖ¸Ê¾
- 			R_LED=~R_LED;     
-			//µç»úÆô¶¯ÌáÊ¾
-// 			if(MotorStart == ENABLE)  B_LED=~R_LED;
- 		}
-		if(_2s == 2)
- 		{
-			_2s = 0;   
-			//µç»úÆô¶¯ÌáÊ¾
-			if(MotorStart == ENABLE)
-			{
-			/*À¶É«LEDÉÁË¸ ----------------------------------------------------*/
-			B_LED=~B_LED;           //±íÊ¾µç»ú¿ØÖÆ´ò¿ª£¬Ã¿2s¿ìËÙÉÁË¸Á½´Î
-			}
- 		}
- 		_1s++;
+	if(TIM3->SR&0X0001)//æº¢å‡ºä¸­æ–­
+	{
+		if(MontionControl.MotionMode == SinglePend || MontionControl.MotionMode == DoublePend)
+			(*MontionControl.CtrlFun)(0,0);		//å•æ‘†æˆ–åŒæ‘†æŽ§åˆ¶å‡½æ•°
 	}
-	TIM3->SR&=~(1<<0);		//Çå³ýÖÐ¶Ï±êÖ¾Î» 
+	TIM3->SR&=~(1<<0);		//æ¸…é™¤ä¸­æ–­æ ‡å¿—ä½ 
 }
-//Í¨ÓÃ¶¨Ê±Æ÷ÖÐ¶Ï³õÊ¼»¯
-//ÕâÀïÊ±ÖÓÑ¡ÔñÎªAPB1µÄ2±¶£¬¶øAPB1Îª36M
-//arr£º×Ô¶¯ÖØ×°Öµ¡£
-//psc£ºÊ±ÖÓÔ¤·ÖÆµÊý
-//ÕâÀïÊ¹ÓÃµÄÊÇ¶¨Ê±Æ÷3!
+
+//é€šç”¨å®šæ—¶å™¨ä¸­æ–­åˆå§‹åŒ–
+//è¿™é‡Œæ—¶é’Ÿé€‰æ‹©ä¸ºAPB1çš„2å€ï¼Œè€ŒAPB1ä¸º36M
+//arrï¼šè‡ªåŠ¨é‡è£…å€¼ã€‚
+//pscï¼šæ—¶é’Ÿé¢„åˆ†é¢‘æ•°
+//è¿™é‡Œä½¿ç”¨çš„æ˜¯å®šæ—¶å™¨3!
 void Timer3_Init(u16 arr,u16 psc)
 {
-	RCC->APB1ENR|=1<<1;//TIM3Ê±ÖÓÊ¹ÄÜ    
- 	TIM3->ARR=arr-1;  //Éè¶¨¼ÆÊýÆ÷×Ô¶¯ÖØ×°Öµ//¸ÕºÃ1ms    
-	TIM3->PSC=psc-1;  //Ô¤·ÖÆµÆ÷
-	TIM3->DIER|=1<<0;   //ÔÊÐí¸üÐÂÖÐ¶Ï				  
-	TIM3->CR1|=0x01;    //Ê¹ÄÜ¶¨Ê±Æ÷3
-  	MY_NVIC_Init(0,0,TIM3_IRQn);//ÇÀÕ¼1£¬×ÓÓÅÏÈ¼¶3£¬×é2									 
+	RCC->APB1ENR|=1<<1;//TIM3æ—¶é’Ÿä½¿èƒ½    
+ 	TIM3->ARR=arr-1;  //è®¾å®šè®¡æ•°å™¨è‡ªåŠ¨é‡è£…å€¼   
+	TIM3->PSC=psc-1;  //é¢„åˆ†é¢‘å™¨
+	TIM3->DIER|=1<<0;   //å…è®¸æ›´æ–°ä¸­æ–­				  
+	TIM3->CR1|=0x01;    //ä½¿èƒ½å®šæ—¶å™¨3
+  	MY_NVIC_Init(1,0,TIM3_IRQn);//æŠ¢å 1ï¼Œå­ä¼˜å…ˆçº§0ï¼Œç»„2									 
 }
 
 

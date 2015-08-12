@@ -5,8 +5,8 @@
 #include "HC05/hc05.h"
 //psc=8
 //arr=999
-//f=72MHz/((59999+1)*(17+1))=50Hz
-//³õÊ¼Õ¼¿Õ±È  50%
+//f=72MHz/(20000*72)=50Hz
+//åˆå§‹å ç©ºæ¯”  5%
 /*
 *		ch1 = PB6
 *       ch2 = PB7
@@ -15,13 +15,13 @@
 */
 void Timer4_PWM_Init(u16 arr,u16 psc)
 {
-	u16 ALLCH_CRR = 3000;		//³õÊ¼Õ¼¿Õ±È
+	u16 ALLCH_CRR = 1000;		//åˆå§‹å ç©ºæ¯”
 	
 	RCC->APB1ENR |= 1<<2;		//TIM4
 	RCC->APB2ENR |= 1<<3;		//GPIOB
 	
-	GPIOB->CRL&=0X00FFFFFF;	//PB6/7/8/9Êä³ö
-	GPIOB->CRL|=0XBB000000;	//¸´ÓÃ¹¦ÄÜÊä³ö 
+	GPIOB->CRL&=0X00FFFFFF;	//PB6/7/8/9è¾“å‡º
+	GPIOB->CRL|=0XBB000000;	//å¤ç”¨åŠŸèƒ½è¾“å‡º 
 	GPIOB->CRH&=0XFFFFFF00;	
 	GPIOB->CRH|=0X000000BB;
 
@@ -29,8 +29,8 @@ void Timer4_PWM_Init(u16 arr,u16 psc)
 	TIM4 ->PSC = psc-1;
 	TIM4->EGR=0x0001;  
 
-	TIM4->CCMR1 |= 6<<4;		//PWMÄ£Ê½1
-	TIM4->CCMR1 |= 1<<3;		//Ê¹ÄÜÔ¤×°ÔØ
+	TIM4->CCMR1 |= 6<<4;		//PWMæ¨¡å¼1
+	TIM4->CCMR1 |= 1<<3;		//ä½¿èƒ½é¢„è£…è½½
 	TIM4->CCMR1 |= 6<<12;
 	TIM4->CCMR1 |= 1<<11;
 	
@@ -39,53 +39,50 @@ void Timer4_PWM_Init(u16 arr,u16 psc)
 	TIM4->CCMR2 |= 6<<12;
 	TIM4->CCMR2 |= 1<<11;
 	
-	TIM4->CCER |= 1<<0;			//Ê¹ÄÜTimer4 PWMÊä³ö
+	TIM4->CCER |= 1<<0;			//ä½¿èƒ½Timer4 PWMè¾“å‡º
 	TIM4->CCER |= 1<<4;
 	TIM4->CCER |= 1<<8;
 	TIM4->CCER |= 1<<12;
 	
-	TIM4->CCR1 = ALLCH_CRR-1;				//³õÊ¼Õ¼¿Õ±È¾ùÎª 5%
+	TIM4->CCR1 = ALLCH_CRR-1;				//åˆå§‹å ç©ºæ¯”å‡ä¸º 5%
 	TIM4->CCR2 = ALLCH_CRR-1;
-	TIM4->CCR3 = ALLCH_CRR-1;
+	TIM4->CCR3 = ALLCH_CRR-1; 
 	TIM4->CCR4 = ALLCH_CRR-1;
 	
-	TIM4->CR1 = 0x0080;			//Ê¹ÄÜARRÖØ×°ÔØ
-// 	TIM4->CR1 |= 1<<0;			//Ê¹ÄÜ¶¨Ê±Æ÷
+	TIM4->CR1 = 0x0080;			//ä½¿èƒ½ARRé‡è£…è½½
+	TIM4->CR1 |= 1<<0;			//ä½¿èƒ½å®šæ—¶å™¨
 }
 
 void PWM_SET(s16 CH1_CCR,s16 CH2_CCR,s16 CH3_CCR,s16 CH4_CCR)
 {
-	if(CH1_CCR>4800)CH1_CCR = 4800;
-	if(CH2_CCR>4800)CH2_CCR = 4800;
-	if(CH3_CCR>4800)CH3_CCR = 4800;
-	if(CH4_CCR>4800)CH4_CCR = 4800;
+	if(CH1_CCR>960)CH1_CCR = 960;
+	if(CH2_CCR>960)CH2_CCR = 960;
+	if(CH3_CCR>960)CH3_CCR = 960;
+	if(CH4_CCR>960)CH4_CCR = 960;
 
-	if(CH1_CCR<=10)CH1_CCR = 10;
-	if(CH2_CCR<=10)CH2_CCR = 10;
-	if(CH3_CCR<=10)CH3_CCR = 10;
-	if(CH4_CCR<=10)CH4_CCR = 10;
+	if(CH1_CCR<=0)CH1_CCR = 0;
+	if(CH2_CCR<=0)CH2_CCR = 0;
+	if(CH3_CCR<=0)CH3_CCR = 0;
+	if(CH4_CCR<=0)CH4_CCR = 0;
 
-	TIM4->CR1&=~(1<<0);        //¹Ø±Õ¶¨Ê±Æ÷4
+	TIM4->CR1&=~(1<<0);        //å…³é—­å®šæ—¶å™¨4
 	
-	TIM4->CCR1 = CH1_CCR-1;		//ÉèÖÃÕ¼¿Õ±ÈZKB
-	TIM4->CCR2 = CH2_CCR-1;
-	TIM4->CCR3 = CH3_CCR-1;
-	TIM4->CCR4 = CH4_CCR-1;
+	TIM4->CCR1 = CH1_CCR+1060;		//è®¾ç½®å ç©ºæ¯”ZKB
+	TIM4->CCR2 = CH2_CCR+1060;
+	TIM4->CCR3 = CH3_CCR+1060;
+	TIM4->CCR4 = CH4_CCR+1060;
 	
-// 	HC05printf(&HC05,"%d    %d\r\n",TIM4->CCR4,CH4_CCR);
-
-	TIM4->CR1|=0x0001;   //´ò¿ª¶¨Ê±Æ÷4£¬¿ªÊ¼Êä³öPWM²¨
+	TIM4->CR1|=0x0001;   //æ‰“å¼€å®šæ—¶å™¨4ï¼Œå¼€å§‹è¾“å‡ºPWMæ³¢
 }
 
 
 void Motor_Init(void)
 {
-	Timer4_PWM_Init(4800,1); //¿ÕÐÄ±­µç»úµÄÒ»°ãÇý¶¯ÆµÂÊÎª10K-20K,¹ÊÈ¡15KHz
-// 	Motor_Start_Up();
-	TIM4->CCR1 = 1;		//ÉèÖÃÕ¼¿Õ±ÈZKB
-	TIM4->CCR2 = 1;
-	TIM4->CCR3 = 1;
-	TIM4->CCR4 = 1;
+	Timer4_PWM_Init(20000,72); 		//ç”µè°ƒæŽ§åˆ¶é¢‘çŽ‡50Hz
+	TIM4->CCR1 = 1000;				//è®¾ç½®å ç©ºæ¯”ZKB
+	TIM4->CCR2 = 1000;
+	TIM4->CCR3 = 1000;
+	TIM4->CCR4 = 1000;
 }
 
 

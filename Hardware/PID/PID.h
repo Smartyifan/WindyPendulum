@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * @file    
-  * @author  ¼ÖÒ»·«
+  * @author  è´¾ä¸€å¸†
   * @version V3.5.0
   * @date    2014-10-4
   * @brief   
@@ -18,25 +18,30 @@
 /* Define --------------------------------------------------------------------*/
 
 typedef struct PIDStruct{          
-	float Kp;			//¼ÆËã²ÎÊı
+	float Kp;			//è®¡ç®—å‚æ•°
     float Ki;
     float Kd;
     
-    float error[3];    //´æ·ÅÆ«²îÁ¿µÄÊı×é  
+    float error[3];    //å­˜æ”¾åå·®é‡çš„æ•°ç»„  
         
     float Pout;
     float Iout;
     float Dout;
-    
+    	
     float PIDout;		//PIDout
-    float PIDout_H;	//PIDoutãĞÖµÏŞÖÆ
+    float PIDout_H;		//PIDouté˜ˆå€¼é™åˆ¶
     float PIDout_L;
 }PIDStruct;
+/* extern variable ----------------------------------------------------------*/
+extern PIDStruct RolpPendPID,RolnPendPID;		//å•æ‘†PIDæ§åˆ¶ç»“æ„ä½“
+extern PIDStruct PitchpPendPID,PitchnPendPID;
+
+extern s16 motor1,motor2,motor3,motor4;			//ç”µæœº
+extern float * pSigPeakValue;					//å³°å€¼æŒ‡é’ˆ
 /*extern function-------------------------------------------------------------*/
-extern PIDStruct x_PendPID,y_PendPID;       //°Ú¸ËPID
-extern s16 motor1,motor2,motor3,motor4;
-extern void PIDParamInit(PIDStruct * PID);
-extern void PIDCalculater(PIDStruct * PID,float error);
-extern void PIDControl(void);
+extern void PIDParamInit(PIDStruct * PID);				//PIDå‚æ•°åˆå§‹åŒ–
+extern void PIDGetError(PIDStruct * PID,float error);	//å­˜æ”¾åå·®		
+extern void PIDCalculater(PIDStruct * PID,float error);	//è®¡ç®—PIDout		
+extern void PIDControl(void);							//PIDæ§åˆ¶è¾“å‡º	
 #endif
 /******************* (C) COPYRIGHT 2014 STMicroelectronics *****END OF FILE****/

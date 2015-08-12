@@ -1,14 +1,14 @@
 /**
   ******************************************************************************
   * @file    	E:\ButterFly\Hardware\JY901\jy901.c
-  * @author  	¼ÖÒ»·«
+  * @author  	è´¾ä¸€å¸†
   * @version	V0.0
   * @date  		2015-07-11 09:52:33
-  * @brief   	JY-901¾ÅÖá×ËÌ¬´«¸ĞÆ÷
+  * @brief   	JY-901ä¹è½´å§¿æ€ä¼ æ„Ÿå™¨
   ******************************************************************************
   * @attention
   * 2015-07-11 09:52:54
-  * Í¨¹ı´®¿Ú¶ÁÈ¡Êı¾İ£¬Ê¹ÓÃDMAÍ¨µÀ
+  * é€šè¿‡ä¸²å£è¯»å–æ•°æ®ï¼Œä½¿ç”¨DMAé€šé“
   ******************************************************************************
   */  
 
@@ -29,21 +29,24 @@
 #include "TIMER/timer.h"
 #include "LED/led.h"
 #include "PWM/pwm.h"
+#include "MotionCtr/motionctr.h"
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 JY901Str JY901;
-FunctionalState DetectZeroDrift = DISABLE;	//Æô¶¯¼ì²âÁãÆ¯
-ErrorStatus DriftDetected = ERROR;			//ÁãÆ¯¼ì²âÍê³É
-FunctionalState MotorStart = DISABLE;       //µç»úÆô¶¯Óë·ñ
+FunctionalState DetectZeroDrift = DISABLE;	//å¯åŠ¨æ£€æµ‹é›¶æ¼‚
+ErrorStatus DriftDetected = ERROR;			//é›¶æ¼‚æ£€æµ‹å®Œæˆ
+FunctionalState MotorStart = DISABLE;       //ç”µæœºå¯åŠ¨ä¸å¦
 
 /* Private function prototypes -----------------------------------------------*/
-void UARTRxDMARec(JY901Str * JY901);							//¿ªÆôÒ»´ÎDMA½ÓÊÕ
-void JY901UartInit(USART_TypeDef * USARTBASE,u32 BaudRate);		//´®¿Ú³õÊ¼»¯
-void UARTRxNVICInit(USART_TypeDef * USARTBASE);					//´®¿ÚµÄNVICÉèÖÃ
-void JY901DMAInit(JY901Str * JY901);							//DMA³õÊ¼»¯
-void DMATCNVICInit(DMA_Channel_TypeDef * DMAChannelRx);			//DMA½ÓÊÕÍ¨µÀNVICÅäÖÃ
+void AnlgeSlide(float (*angle)[3],float newangle);
+void UARTRxDMARec(JY901Str * JY901);							//å¼€å¯ä¸€æ¬¡DMAæ¥æ”¶
+void JY901UartInit(USART_TypeDef * USARTBASE,u32 BaudRate);		//ä¸²å£åˆå§‹åŒ–
+void UARTRxNVICInit(USART_TypeDef * USARTBASE);					//ä¸²å£çš„NVICè®¾ç½®
+void JY901DMAInit(JY901Str * JY901);							//DMAåˆå§‹åŒ–
+void DMATCNVICInit(DMA_Channel_TypeDef * DMAChannelRx);			//DMAæ¥æ”¶é€šé“NVICé…ç½®
 /* Private functions ---------------------------------------------------------*/
 
 /**
@@ -53,48 +56,48 @@ void DMATCNVICInit(DMA_Channel_TypeDef * DMAChannelRx);			//DMA½ÓÊÕÍ¨µÀNVICÅäÖÃ
   */
 void JY901Init(JY901Str * JY901){
 	
-	/* È·ÈÏDMAÍ¨µÀºÅ ------------------------------------------------------------------------------------*/
+	/* ç¡®è®¤DMAé€šé“å· ------------------------------------------------------------------------------------*/
 	if(JY901->USARTBASE == USART1){
-		JY901->DMAChannelTx = DMA1_Channel4;	//TxÍ¨µÀ 
-		JY901->DMAChannelRx = DMA1_Channel5;	//RxÍ¨µÀ
+		JY901->DMAChannelTx = DMA1_Channel4;	//Txé€šé“ 
+		JY901->DMAChannelRx = DMA1_Channel5;	//Rxé€šé“
 	}else if(JY901->USARTBASE == USART2){
-		JY901->DMAChannelTx = DMA1_Channel7;	//TxÍ¨µÀ 
-		JY901->DMAChannelRx = DMA1_Channel6;	//RxÍ¨µÀ
+		JY901->DMAChannelTx = DMA1_Channel7;	//Txé€šé“ 
+		JY901->DMAChannelRx = DMA1_Channel6;	//Rxé€šé“
 	}else if(JY901->USARTBASE == USART3){
-		JY901->DMAChannelTx = DMA1_Channel2;	//TxÍ¨µÀ 
-		JY901->DMAChannelRx = DMA1_Channel3;	//RxÍ¨µÀ
+		JY901->DMAChannelTx = DMA1_Channel2;	//Txé€šé“ 
+		JY901->DMAChannelRx = DMA1_Channel3;	//Rxé€šé“
 	}
 
-	/* ´®¿Ú³õÊ¼»¯ ----------------------------------------------------------------------------------------*/
+	/* ä¸²å£åˆå§‹åŒ– ----------------------------------------------------------------------------------------*/
 	JY901UartInit(JY901->USARTBASE,115200);
 	
-	/* DMA³õÊ¼»¯ -----------------------------------------------------------------------------------------*/	
-	USART_DMACmd(JY901->USARTBASE,USART_DMAReq_Tx,ENABLE);	//Ê¹ÄÜ´®¿Ú·¢ËÍDMA
-	USART_DMACmd(JY901->USARTBASE,USART_DMAReq_Rx,ENABLE);	//Ê¹ÄÜ´®¿Ú½ÓÊÕDMA
+	/* DMAåˆå§‹åŒ– -----------------------------------------------------------------------------------------*/	
+	USART_DMACmd(JY901->USARTBASE,USART_DMAReq_Tx,ENABLE);	//ä½¿èƒ½ä¸²å£å‘é€DMA
+	USART_DMACmd(JY901->USARTBASE,USART_DMAReq_Rx,ENABLE);	//ä½¿èƒ½ä¸²å£æ¥æ”¶DMA
 
-	JY901DMAInit(JY901);		//³õÊ¼»¯DMA
+	JY901DMAInit(JY901);		//åˆå§‹åŒ–DMA
 }
 
 
 /**
-  *@brief   	USART2_IRQHandler	´®¿Ú2ÖĞ¶Ïº¯Êı£¬ÓÃÓÚ¼ì²âJY901Êı¾İ°üÍ· 0x55 0x51
+  *@brief   	USART2_IRQHandler	ä¸²å£2ä¸­æ–­å‡½æ•°ï¼Œç”¨äºæ£€æµ‹JY901æ•°æ®åŒ…å¤´ 0x55 0x51
   *@param   	None
   *@retval  	None
-  *@attention	ÇÀÕ¼ÓÅÏÈ¼¶ 0 ×ÓÓÅÏÈ¼¶ 1
+  *@attention	æŠ¢å ä¼˜å…ˆçº§ 0 å­ä¼˜å…ˆçº§ 1
   */
 void USART2_IRQHandler(void){
-	static u8 FH[2];		//Ö¡Í·Êı×é
-	static u8 pFH = 0;		//Êı×éÏÂ±ê
+	static u8 FH[2];		//å¸§å¤´æ•°ç»„
+	static u8 pFH = 0;		//æ•°ç»„ä¸‹æ ‡
 	
-	if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET){	//½ÓÊÕµ½Êı¾İ
+	if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET){	//æ¥æ”¶åˆ°æ•°æ®
 		FH[pFH] = (unsigned char)JY901.USARTBASE->DR;
 		
-		if(pFH == 0 && FH[0] == 0x55){		//¼ì²éµÚÒ»¸ö×Ö½Ú	
+		if(pFH == 0 && FH[0] == 0x55){		//æ£€æŸ¥ç¬¬ä¸€ä¸ªå­—èŠ‚	
 			pFH++;
-		}else if(pFH == 1){					//¼ì²éµÚ¶ş¸ö×Ö½Ú
+		}else if(pFH == 1){					//æ£€æŸ¥ç¬¬äºŒä¸ªå­—èŠ‚
 			if(FH[1]==0x51){
-				USART_ITConfig(JY901.USARTBASE,USART_IT_RXNE,DISABLE);	//¹Ø±Õ´®¿Ú½ÓÊÕÖĞ¶Ï
-				UARTRxDMARec(&JY901);									//¿ªÆôÒ»´ÎDMA´«Êä
+				USART_ITConfig(JY901.USARTBASE,USART_IT_RXNE,DISABLE);	//å…³é—­ä¸²å£æ¥æ”¶ä¸­æ–­
+				UARTRxDMARec(&JY901);									//å¼€å¯ä¸€æ¬¡DMAä¼ è¾“
 			}
 			pFH = 0;
 		}
@@ -102,72 +105,64 @@ void USART2_IRQHandler(void){
 }
 
 /**
-  *@brief   	DMA1_Channel6_IRQHandler  DMAÍ¨µÀ6ÖĞ¶Ïº¯Êı£¬ÓÃÓÚ¶ÁMPU6050Ö®ºó½øĞĞÏà¹Ø´¦Àí
+  *@brief   	DMA1_Channel6_IRQHandler  DMAé€šé“6ä¸­æ–­å‡½æ•°ï¼Œç”¨äºè¯»MPU6050ä¹‹åè¿›è¡Œç›¸å…³å¤„ç†
   *@param   	None
   *@retval    	None
-  *@attention 	Ö´ĞĞÊ±¼ä 16.77us£¨Íê³ÉÁãÆ¯¼ì²âÖ®ºó£©		²âÁ¿¹¤¾ß:ST-Link_V2
-				ÇÀÕ¼ÓÅÏÈ¼¶ 1 ×ÓÓÅÏÈ¼¶ 0
+  *@attention 	æ‰§è¡Œæ—¶é—´ 16.77usï¼ˆå®Œæˆé›¶æ¼‚æ£€æµ‹ä¹‹åï¼‰		æµ‹é‡å·¥å…·:ST-Link_V2
+				æŠ¢å ä¼˜å…ˆçº§ 1 å­ä¼˜å…ˆçº§ 0
   */
 u16 i=0;  
 void DMA1_Channel6_IRQHandler(void){
-	/* ¶¨Òåx,y½Ç¶ÈµÄÆ«²îÁ¿--------------------------------------------------------------------*/
-	float x_CurrentError,y_CurrentError;      //Ä¿±êÖµ¼õÈ¥Êµ¼Ê½Ç¶ÈÖµ£¨ÒÑ¼õÈ¥ÁãÆ¯£©
    
-	static float RolZeroDirftAll=0,PitchZeroDirftAll=0;//ÁãÆ¯ÀÛ¼Æ±äÁ¿
-		
+	static float RolZeroDirftAll=0,PitchZeroDirftAll=0;//é›¶æ¼‚ç´¯è®¡å˜é‡	
+	static float amplitude;		//è°ƒè¯•å‚æ•°ï¼Œå¯åˆ é™¤
 	
 	if(DMA_GetITStatus(DMA1_IT_TC6) == SET){	
 
 		/* Use JY-901 ----------------------------------------------------------------------*/
-		memcpy(&(JY901.Ax),&JY901.RxData[1],8);		//¼ÓËÙ¶È
-		memcpy(&(JY901.Wx),&JY901.RxData[12],6);	//½ÇËÙ¶È
-		memcpy(&(JY901.Ang),&JY901.RxData[23],6);	//½Ç¶È	
+		memcpy(&(JY901.Ax),&JY901.RxData[1],6);		//åŠ é€Ÿåº¦
+		memcpy(&(JY901.Wx),&JY901.RxData[12],6);	//è§’é€Ÿåº¦
+		memcpy(&(JY901.Ang),&JY901.RxData[23],6);	//è§’åº¦	
 		
-		/* Use MPU6050 ---------------------------------------------------------------------*/
-// 		memcpy(&(JY901.Ax),&JY901.RxData[1],6);		//¼ÓËÙ¶È
-// 		memcpy(&(JY901.Wx),&JY901.RxData[12],6);	//½ÇËÙ¶È	
-// 		memcpy(&(JY901.Ang),&JY901.RxData[23],6);	//½Ç¶È
-		/* ÏÔÊ¾½Ç¶È ------------------------------------------------------------------------*/
+		/* æ˜¾ç¤ºè§’åº¦ ------------------------------------------------------------------------*/
 
-		/* ´øÌõ¼şµÄ½Ç¶È×ª»»-----------------------------------------------------------------------*/
-		if(abs(JY901.Ang.Rol) > 273 && abs(JY901.Ang.Rol <13653))		JY901.AngCuled.RolCuled = (float)JY901.Ang.Rol/32768*180;
-		if(abs(JY901.Ang.Pitch) > 273 && abs(JY901.Ang.Pitch <13653)) 	JY901.AngCuled.PitchCuled = (float)JY901.Ang.Pitch/32768*180; 
+		/* å¸¦æ¡ä»¶çš„è§’åº¦è½¬æ¢-----------------------------------------------------------------------*/
+		JY901.AngCuled.RolCuled = (float)JY901.Ang.Rol/32768*180;
+		JY901.AngCuled.PitchCuled = (float)JY901.Ang.Pitch/32768*180; 
 
-		/* ½ÇËÙ¶È×ª»» --------------------------------------------------------------------*/
-		JY901.WxCuled.Rol = (float)JY901.Wx.x/32768*2000;
-		JY901.WxCuled.Pitch = (float)JY901.Wx.y/32768*2000;
+		/* è§’é€Ÿåº¦è½¬æ¢ --------------------------------------------------------------------*/
+// 		JY901.WxCuled.Rol = (float)JY901.Wx.x/32768*2000;
+// 		JY901.WxCuled.Pitch = (float)JY901.Wx.y/32768*2000;
 		
-		/* ÁãÆ¯¼ÆËã-----------------------------------------------------------------------*/
-		/*CuledFlagÎª0Ê±Æ«²îÎ´¼ÆËãÍê³É£¬Îª1Ê±±íÊ¾Æ«²î¼ÆËãÍê³É*/
+		/* é›¶æ¼‚è®¡ç®—-----------------------------------------------------------------------*/
 		if(DetectZeroDrift == ENABLE) 
 		{
-			if(i == ZeroDirftCulNum) //¼ÆËãÆ«²îÖµÖµ
+			if(i == ZeroDirftCulNum) //è®¡ç®—åå·®å€¼å€¼
 			{
-				/* ¼ÆËãÁãÆ¯ ------------------------------------------------------*/
+				/* è®¡ç®—é›¶æ¼‚ ------------------------------------------------------*/
 				JY901.ZeroDirft.RolZeroDirft = RolZeroDirftAll/ZeroDirftCulNum;
 				JY901.ZeroDirft.PitchZeroDirft = PitchZeroDirftAll/ZeroDirftCulNum;
 				
-				/* ÉèÖÃ±êÖ¾Î» -----------------------------------------------------*/
-				DetectZeroDrift = DISABLE;		//²»¼ì²âÁãÆ¯
-				DriftDetected = SUCCESS;		//ÁãÆ¯¼ì²âÍê³É
+				/* è®¾ç½®æ ‡å¿—ä½ -----------------------------------------------------*/
+				DetectZeroDrift = DISABLE;		//ä¸æ£€æµ‹é›¶æ¼‚
+				DriftDetected = SUCCESS;		//é›¶æ¼‚æ£€æµ‹å®Œæˆ
 				
-				/* ÂÌÉ«LEDÉÁË¸ ----------------------------------------------------*/
-				G_LED=0;            			//±íÊ¾³õÊ¼»¯¼ÆËãÍê³É£¬LEDÂÌµÆ¿ìËÙÉÁË¸2ÏÂ
+				/* ç»¿è‰²LEDé—ªçƒ ----------------------------------------------------*/
+				G_LED=0;            			//è¡¨ç¤ºåˆå§‹åŒ–è®¡ç®—å®Œæˆï¼ŒLEDç»¿ç¯å¿«é€Ÿé—ªçƒ2ä¸‹
 				delay_ms(100);
 				G_LED=1;
 				delay_ms(100);
 				G_LED=0;            
 				delay_ms(100);
 				G_LED=1;
-				/* ´òÓ¡ÁãÆ¯Êı×Ö -----------------------------------------------------------------------------------*/
+				/* æ‰“å°é›¶æ¼‚æ•°å­— -----------------------------------------------------------------------------------*/
 				HC05printf(&HC05,"Calculate Success ...\r\nRolZeroDirft = %f\r\nPitchZeroDirft = %f\r\n",
 													JY901.ZeroDirft.RolZeroDirft,	JY901.ZeroDirft.PitchZeroDirft);
 				/* -----------------------------------------------------------------------------------------------*/
-
 			}
 			else 
 			{
-				if (i == 0)      //ÇåÁãÆ«²îÖµ
+				if (i == 0)      //æ¸…é›¶åå·®å€¼
 				{
 					RolZeroDirftAll = 0;
 					PitchZeroDirftAll =0;
@@ -178,71 +173,75 @@ void DMA1_Channel6_IRQHandler(void){
 			i++;
 		}
 		
-		/* PID¿ØÖÆ-----------------------------------------------------------------------*/
-		else if(DetectZeroDrift == DISABLE && DriftDetected == SUCCESS && MotorStart == ENABLE)  //Ö»ÓĞµ±¼ÆËãÆ«²î¼ÆËãÍê³ÉÊ±²ÅÆô¶¯PID¿ØÖÆ
+		
+		/* åŸºäºJY901çš„æ§åˆ¶-----------------------------------------------------------------------*/
+		else if(DetectZeroDrift == DISABLE && DriftDetected == SUCCESS && MotorStart == ENABLE)  //åªæœ‰å½“è®¡ç®—åå·®è®¡ç®—å®Œæˆæ—¶æ‰å¯åŠ¨PIDæ§åˆ¶
 		{
-			//ÓÉÓ²¼ş·ÂÕæ¿ÉÖª£¬PID¼ÆËãÆµÂÊ´ó¸ÅÎª51Hz
-			//x_CurrentError =  Ä¿±êÖµ  -  µ±Ç°Êµ¼ÊÖµ - ÁãÆ¯
-			/* µÃµ½Æ«²î½Ç¶È --------------------------------------------------------------*/
-			x_CurrentError = x_TargetAngle - JY901.AngCuled.RolCuled + JY901.ZeroDirft.RolZeroDirft;
-			y_CurrentError = y_TargetAngle - JY901.AngCuled.PitchCuled + JY901.ZeroDirft.PitchZeroDirft;
+			/* å½“æ¨¡å¼ä¸ºå•æ‘†æˆ–åŒæ‘†æ—¶ï¼Œè®¡ç®—æ‘†å¹…ï¼Œå¹¶è°ƒæ•´æ§åˆ¶é‡å³°å€¼ --------------------------*/
+			if(MontionControl.MotionMode == SinglePend ||  MontionControl.MotionMode == DoublePend){
+				/* æ»‘åŠ¨è§’åº¦ --------------------------------------------*/
+				AnlgeSlide(&JY901.Rol,JY901.AngCuled.RolCuled-JY901.ZeroDirft.RolZeroDirft);		//Rol
+				AnlgeSlide(&JY901.Pitch,JY901.AngCuled.PitchCuled-JY901.ZeroDirft.PitchZeroDirft);	//Pitch
+				
+				//è®¡ç®—è§’é€Ÿåº¦
+				JY901.dRol[1] = JY901.dRol[0];					//Rol
+				JY901.dRol[0] = JY901.Rol[0]-JY901.Rol[1];
+				JY901.dPitch[1] = JY901.dPitch[0];				//Pitch
+				JY901.dPitch[0] = JY901.Pitch[0] - JY901.Pitch[1]; 
+				
+				/* åˆ¤æ–­æ‘†å¹…å¹¶æ ¹æ®æ‘†å¹…æ”¹å˜ä¸€æ¬¡PIDout -------------------------------------*/
+				if(JY901.Rol[1] > 0){										//Rol
+					if(JY901.dRol[0]<=0	&&	JY901.dRol[1]>=0){
+						
+						amplitude = JY901.Rol[1];						//æŸ¥çœ‹å¹…åº¦
+						
+						MontionControl.eRolp_Amplitude[1] = MontionControl.eRolp_Amplitude[0];
+						MontionControl.eRolp_Amplitude[0] = MontionControl.SinglePendParam.RolAmplitude - JY901.Rol[1];		//Rolæ­£æ‘†å¹…
+						
+						RolpPendPID.PIDout += RolpPendPID.Kp * (MontionControl.eRolp_Amplitude[0])
+												+RolpPendPID.Kd * (MontionControl.eRolp_Amplitude[0] - MontionControl.eRolp_Amplitude[1]);		//Rol
+					}
+				}else if(JY901.Rol[1] < 0){
+					if(JY901.dRol[0]>=0	&&	JY901.dRol[1]<=0){  
+						MontionControl.eRoln_Amplitude[1] = MontionControl.eRoln_Amplitude[0];
+						MontionControl.eRoln_Amplitude[0] = MontionControl.SinglePendParam.RolAmplitude + JY901.Rol[1];		//Rolè´Ÿæ‘†å¹…
+						
+						RolnPendPID.PIDout += RolnPendPID.Kp * 	(MontionControl.eRoln_Amplitude[0])
+												+ RolnPendPID.Kd * (MontionControl.eRoln_Amplitude[0] - MontionControl.eRoln_Amplitude[1]);
+					}
+				}
+				if(JY901.Pitch[1] > 0){										//Pitch
+					if(JY901.dPitch[0]<=0   &&   JY901.dPitch[1]>=0){
+						MontionControl.ePitchp_Amplitude[1] = MontionControl.ePitchp_Amplitude[0];
+						MontionControl.ePitchp_Amplitude[0] = MontionControl.SinglePendParam.PitchAmplitude - JY901.Pitch[1];	//Pitchæ­£æ‘†å¹…
+						
+						PitchpPendPID.PIDout += PitchpPendPID.Kp * (MontionControl.ePitchp_Amplitude[0])
+												+PitchpPendPID.Kd * (MontionControl.ePitchp_Amplitude[0] - MontionControl.ePitchp_Amplitude[1]);	//Pitch
+					} 
+				}else if(JY901.Pitch[1] < 0){
+					if(JY901.dPitch[0]>=0   &&	JY901.dPitch[1]<=0){
+						MontionControl.ePitchn_Amplitude[1] = MontionControl.ePitchn_Amplitude[0];
+						MontionControl.ePitchn_Amplitude[0] = MontionControl.SinglePendParam.PitchAmplitude + JY901.Pitch[1];	//Pitchè´Ÿæ‘†å¹…
+						
+						PitchnPendPID.PIDout += PitchnPendPID.Kp * (MontionControl.ePitchn_Amplitude[0])
+												+PitchnPendPID.Kd * (MontionControl.ePitchn_Amplitude[0] - MontionControl.ePitchn_Amplitude[1]);
+					}
+				}
+				
+			/* å½“æ¨¡å¼ä¸ºç¨³å®šç‚¹æ—¶çš„æ§åˆ¶ ----------------------------------------------------*/	
+			}else if(MontionControl.MotionMode == StabelPlot){
+				//ç¨³å®šç‚¹çš„æ§åˆ¶
+				StablePlotCtrl(JY901.AngCuled.RolCuled,JY901.AngCuled.PitchCuled);
+			}
 			
-			/* ¼ÆËãPIDoout --------------------------------------------------------------*/
-// 			PIDCalculater(&x_PendPID,x_CurrentError);
-// 			PIDCalculater(&y_PendPID,y_CurrentError);
-			/* ¼ÆËãPout --------------------------------------------*/
-			x_PendPID.Pout = x_PendPID.Kp * x_CurrentError;			//Rol
-			y_PendPID.Pout = y_PendPID.Kp * y_CurrentError;			//Pitch
-			
-			/* ¼ÆËãIout --------------------------------------------*/
-			if(x_CurrentError>-1.5 && x_CurrentError <1.5){			//Rol
-				x_PendPID.Iout += x_PendPID.Ki * x_CurrentError;
-			}else x_PendPID.Iout = 0;
-			
-			if(y_CurrentError>-1.5 && y_CurrentError <1.5){			//Pitch
-				y_PendPID.Iout += y_PendPID.Ki * y_CurrentError;
-			}else y_PendPID.Iout = 0;
-			
-			/* ¼ÆËãDout --------------------------------------------*/
-			x_PendPID.Dout = -x_PendPID.Kd * JY901.WxCuled.Rol;		//Rol
-			y_PendPID.Dout = -y_PendPID.Kd * JY901.WxCuled.Pitch;	//Pitch	
-			
-			/* ½«PIDoutÊä³öÖÁTIM4¿ØÖÆµç»ú -------------------------------------------------*/
-// 			PIDControl();		
-
-			//Pout Óë Iout 
-			motor1 = TIM4->CCR1 -((s16)(y_PendPID.Pout + y_PendPID.Iout));	
-			motor2 = TIM4->CCR2 -((s16)(x_PendPID.Pout + x_PendPID.Iout));
-			motor3 = TIM4->CCR3 +((s16)(y_PendPID.Pout + y_PendPID.Iout));
-			motor4 = TIM4->CCR4 +((s16)(x_PendPID.Pout + x_PendPID.Iout));
-
-			if(motor1>4800)motor1 = 4800;
-			if(motor2>4800)motor2 = 4800;
-			if(motor3>4800)motor3 = 4800;
-			if(motor4>4800)motor4 = 4800;
-
-			if(motor1<=10)motor1 = 10;
-			if(motor2<=10)motor2 = 10;
-			if(motor3<=10)motor3 = 10;
-			if(motor4<=10)motor4 = 10;
-
-			//Dout
-			motor1 -= y_PendPID.Dout;
-			motor2 -= x_PendPID.Dout;
-			motor3 += y_PendPID.Dout;
-			motor4 += x_PendPID.Dout;
-			
-			PWM_SET(motor1,motor2,motor3,motor4);
-
-			/* ÔÚXJIÉÏÎ»»ú»­³öÊı¾İÍ¼ĞÎ ----------------------------------------------------*/
- 			SimplePlotSend(&HC05,JY901.AngCuled.RolCuled,x_CurrentError,JY901.WxCuled.Rol,(float)TIM4->CCR4);		//Ö´ĞĞÊ±¼ä 7.92us ¡Ö 8us
+			/* åœ¨XJIä¸Šä½æœºç”»å‡ºæ•°æ®å›¾å½¢ ----------------------------------------------------*/
+			SimplePlotSend(&HC05,JY901.AngCuled.RolCuled-JY901.ZeroDirft.RolZeroDirft,amplitude,0,0);		//æ‰§è¡Œæ—¶é—´ 7.92us â‰ˆ 8us
 			
 		}
-		
-		/* ºóĞø´¦Àí ----------------------------------------------------------------------*/
-		USART_ITConfig(JY901.USARTBASE,USART_IT_RXNE,ENABLE);	//´ò¿ª´®¿Ú½ÓÊÕÖĞ¶Ï
+		/* åç»­å¤„ç† ----------------------------------------------------------------------*/
+		USART_ITConfig(JY901.USARTBASE,USART_IT_RXNE,ENABLE);	//æ‰“å¼€ä¸²å£æ¥æ”¶ä¸­æ–­
 
-		JY901.DMAChannelRx->CCR&=~1;      		//¹Ø±ÕDMA´«Êä 
+		JY901.DMAChannelRx->CCR&=~1;      		//å…³é—­DMAä¼ è¾“ 
 
 		DMA_ClearITPendingBit(DMA1_IT_GL6);
 	}
@@ -250,82 +249,95 @@ void DMA1_Channel6_IRQHandler(void){
 }
 
 /**
-  *@brief   UARTRxDMARec		Æô¶¯Ò»´Î´®¿ÚµÄDMA´«Êä
-  *@param   JY901Str * JY901		//JY901½á¹¹Ìå
+  *@brief   AnlgeSlide	è§’åº¦æ»‘åŠ¨å‡½æ•°
+  *@param	None
+  *@retval	None
+  */
+void AnlgeSlide(float (*angle)[3],float newangle){
+	(*angle)[2] = (*angle)[1];
+	(*angle)[1] = (*angle)[0];
+	(*angle)[0] = newangle;
+}
+
+
+
+/**
+  *@brief   UARTRxDMARec		å¯åŠ¨ä¸€æ¬¡ä¸²å£çš„DMAä¼ è¾“
+  *@param   JY901Str * JY901		//JY901ç»“æ„ä½“
   *@retval    None
   */
 void UARTRxDMARec(JY901Str * JY901){
-	JY901->DMAChannelRx->CCR&=~1;      		//¹Ø±ÕDMA´«Êä 
-	JY901->DMAChannelRx->CNDTR=JY901RxLen;  //DMA,´«ÊäÊı¾İÁ¿ 
-	JY901->DMAChannelRx->CCR|=1;       		//¿ªÆôDMA´«Êä
+	JY901->DMAChannelRx->CCR&=~1;      		//å…³é—­DMAä¼ è¾“ 
+	JY901->DMAChannelRx->CNDTR=JY901RxLen;  //DMA,ä¼ è¾“æ•°æ®é‡ 
+	JY901->DMAChannelRx->CCR|=1;       		//å¼€å¯DMAä¼ è¾“
 }
 
 /**
   *@brief   JY901DMAInit
-  *@param   JY901Str * JY901		//JY901½á¹¹Ìå
+  *@param   JY901Str * JY901		//JY901ç»“æ„ä½“
   *@retval    None
   */
 void JY901DMAInit(JY901Str * JY901){
 	DMA_InitTypeDef DMA_InitStructure;
 	
-	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);	//Ê¹ÄÜDMA´«Êä
+	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);	//ä½¿èƒ½DMAä¼ è¾“
 	delay_us(5);
 
-	/* UARTx  Tx DMAÍ¨µÀ³õÊ¼»¯ ---------------------------------------------------------------------------------*/
-    DMA_DeInit(JY901->DMAChannelTx);   									//½«DMAµÄÍ¨µÀx¼Ä´æÆ÷ÖØÉèÎªÈ±Ê¡Öµ
-	DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)(&(JY901->USARTBASE)->DR);  //DMAÍâÉèUSART->DR»ùµØÖ·
-	DMA_InitStructure.DMA_MemoryBaseAddr = (u32)&JY901->TxData;  		//DMAÄÚ´æ»ùµØÖ·
-	DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralDST; 			 		//Êı¾İ´«Êä·½Ïò£¬´ÓÄÚ´æ¶ÁÈ¡·¢ËÍµ½ÍâÉè
-	DMA_InitStructure.DMA_BufferSize = JY901TxLen;  					//DMAÍ¨µÀµÄDMA»º´æµÄ´óĞ¡
-	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;  	//ÍâÉèµØÖ·¼Ä´æÆ÷²»±ä
-	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;  			//ÄÚ´æµØÖ·¼Ä´æÆ÷µİÔö
-	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;  //Êı¾İ¿í¶ÈÎª8Î»
-	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte; 	//Êı¾İ¿í¶ÈÎª8Î»
-	DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;  						//¹¤×÷ÔÚÕı³£»º´æÄ£Ê½
-	DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh; 			//DMAÍ¨µÀ xÓµÓĞÖĞÓÅÏÈ¼¶ 
-	DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;  						//DMAÍ¨µÀxÃ»ÓĞÉèÖÃÎªÄÚ´æµ½ÄÚ´æ´«Êä
-	DMA_Init(JY901->DMAChannelTx, &DMA_InitStructure);  				//¸ù¾İDMA_InitStructÖĞÖ¸¶¨µÄ²ÎÊı³õÊ¼»¯DMAµÄÍ¨µÀUSARTx_Tx_DMA_ChannexËù±êÊ¶µÄ¼Ä´æÆ÷
+	/* UARTx  Tx DMAé€šé“åˆå§‹åŒ– ---------------------------------------------------------------------------------*/
+    DMA_DeInit(JY901->DMAChannelTx);   									//å°†DMAçš„é€šé“xå¯„å­˜å™¨é‡è®¾ä¸ºç¼ºçœå€¼
+	DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)(&(JY901->USARTBASE)->DR);  //DMAå¤–è®¾USART->DRåŸºåœ°å€
+	DMA_InitStructure.DMA_MemoryBaseAddr = (u32)&JY901->TxData;  		//DMAå†…å­˜åŸºåœ°å€
+	DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralDST; 			 		//æ•°æ®ä¼ è¾“æ–¹å‘ï¼Œä»å†…å­˜è¯»å–å‘é€åˆ°å¤–è®¾
+	DMA_InitStructure.DMA_BufferSize = JY901TxLen;  					//DMAé€šé“çš„DMAç¼“å­˜çš„å¤§å°
+	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;  	//å¤–è®¾åœ°å€å¯„å­˜å™¨ä¸å˜
+	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;  			//å†…å­˜åœ°å€å¯„å­˜å™¨é€’å¢
+	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;  //æ•°æ®å®½åº¦ä¸º8ä½
+	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte; 	//æ•°æ®å®½åº¦ä¸º8ä½
+	DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;  						//å·¥ä½œåœ¨æ­£å¸¸ç¼“å­˜æ¨¡å¼
+	DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh; 			//DMAé€šé“ xæ‹¥æœ‰ä¸­ä¼˜å…ˆçº§ 
+	DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;  						//DMAé€šé“xæ²¡æœ‰è®¾ç½®ä¸ºå†…å­˜åˆ°å†…å­˜ä¼ è¾“
+	DMA_Init(JY901->DMAChannelTx, &DMA_InitStructure);  				//æ ¹æ®DMA_InitStructä¸­æŒ‡å®šçš„å‚æ•°åˆå§‹åŒ–DMAçš„é€šé“USARTx_Tx_DMA_Channexæ‰€æ ‡è¯†çš„å¯„å­˜å™¨
 	
 	
 	
-	/* UARTx  Rx DMAÍ¨µÀ³õÊ¼»¯ ---------------------------------------------------------------------------------*/
-	DMA_DeInit(JY901->DMAChannelRx);   									//½«DMAµÄÍ¨µÀx¼Ä´æÆ÷ÖØÉèÎªÈ±Ê¡Öµ
-	DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)(&(JY901->USARTBASE)->DR);  //DMAÍâÉèUSART->DR»ùµØÖ·
-	DMA_InitStructure.DMA_MemoryBaseAddr = (u32)&JY901->RxData;  		//DMAÄÚ´æ»ùµØÖ·  RxDataÊı×é
-	DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC; 			 		//Êı¾İ´«Êä·½Ïò£¬´ÓÍâÉè¶ÁÈ¡²¢·¢ËÍµ½ÄÚ´æ
-	DMA_InitStructure.DMA_BufferSize = JY901RxLen;  					//DMAÍ¨µÀµÄDMA»º´æµÄ´óĞ¡
-	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;  	//ÍâÉèµØÖ·¼Ä´æÆ÷²»±ä
-	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;  			//ÄÚ´æµØÖ·¼Ä´æÆ÷µİÔö
-	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;  //Êı¾İ¿í¶ÈÎª8Î»
-	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte; 	//Êı¾İ¿í¶ÈÎª8Î»
-	DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;  						//¹¤×÷ÔÚÕı³£»º´æÄ£Ê½
-	DMA_InitStructure.DMA_Priority = DMA_Priority_High; 				//DMAÍ¨µÀ xÓµÓĞ¸ßÓÅÏÈ¼¶ 
-	DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;  						//DMAÍ¨µÀxÃ»ÓĞÉèÖÃÎªÄÚ´æµ½ÄÚ´æ´«Êä
-	DMA_Init(JY901->DMAChannelRx, &DMA_InitStructure);  				//¸ù¾İDMA_InitStructÖĞÖ¸¶¨µÄ²ÎÊı³õÊ¼»¯DMAµÄÍ¨µÀUSARTx_Rx_DMA_ChannexËù±êÊ¶µÄ¼Ä´æÆ÷
+	/* UARTx  Rx DMAé€šé“åˆå§‹åŒ– ---------------------------------------------------------------------------------*/
+	DMA_DeInit(JY901->DMAChannelRx);   									//å°†DMAçš„é€šé“xå¯„å­˜å™¨é‡è®¾ä¸ºç¼ºçœå€¼
+	DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)(&(JY901->USARTBASE)->DR);  //DMAå¤–è®¾USART->DRåŸºåœ°å€
+	DMA_InitStructure.DMA_MemoryBaseAddr = (u32)&JY901->RxData;  		//DMAå†…å­˜åŸºåœ°å€  RxDataæ•°ç»„
+	DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC; 			 		//æ•°æ®ä¼ è¾“æ–¹å‘ï¼Œä»å¤–è®¾è¯»å–å¹¶å‘é€åˆ°å†…å­˜
+	DMA_InitStructure.DMA_BufferSize = JY901RxLen;  					//DMAé€šé“çš„DMAç¼“å­˜çš„å¤§å°
+	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;  	//å¤–è®¾åœ°å€å¯„å­˜å™¨ä¸å˜
+	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;  			//å†…å­˜åœ°å€å¯„å­˜å™¨é€’å¢
+	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;  //æ•°æ®å®½åº¦ä¸º8ä½
+	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte; 	//æ•°æ®å®½åº¦ä¸º8ä½
+	DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;  						//å·¥ä½œåœ¨æ­£å¸¸ç¼“å­˜æ¨¡å¼
+	DMA_InitStructure.DMA_Priority = DMA_Priority_High; 				//DMAé€šé“ xæ‹¥æœ‰é«˜ä¼˜å…ˆçº§ 
+	DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;  						//DMAé€šé“xæ²¡æœ‰è®¾ç½®ä¸ºå†…å­˜åˆ°å†…å­˜ä¼ è¾“
+	DMA_Init(JY901->DMAChannelRx, &DMA_InitStructure);  				//æ ¹æ®DMA_InitStructä¸­æŒ‡å®šçš„å‚æ•°åˆå§‹åŒ–DMAçš„é€šé“USARTx_Rx_DMA_Channexæ‰€æ ‡è¯†çš„å¯„å­˜å™¨
 
-	DMA_ITConfig(JY901->DMAChannelRx, DMA_IT_TC, ENABLE);				//¿ªÆô´«ÊäÍê³ÉÖĞ¶Ï
-	DMATCNVICInit(JY901->DMAChannelRx);									//ÅäÖÃNVIC			
+	DMA_ITConfig(JY901->DMAChannelRx, DMA_IT_TC, ENABLE);				//å¼€å¯ä¼ è¾“å®Œæˆä¸­æ–­
+	DMATCNVICInit(JY901->DMAChannelRx);									//é…ç½®NVIC			
 	
-	DMA_SetCurrDataCounter(JY901->DMAChannelTx,0);		//TxDMAÍ¨µÀ·¢ËÍÊıÇå¿Õ
-	DMA_SetCurrDataCounter(JY901->DMAChannelRx,0);		//RxDMAÍ¨µÀ·¢ËÍÊıÇå¿Õ
+	DMA_SetCurrDataCounter(JY901->DMAChannelTx,0);		//TxDMAé€šé“å‘é€æ•°æ¸…ç©º
+	DMA_SetCurrDataCounter(JY901->DMAChannelRx,0);		//RxDMAé€šé“å‘é€æ•°æ¸…ç©º
 }
 
 /**
-  *@brief   JY901UartInit	HC-05Ê¹ÓÃµÄ´®¿Ú³õÊ¼»¯
-  *@param   USART_TypeDef * USARTBASE	´®¿ÚºÅ
-  *			u32 BaudRate	²¨ÌØÂÊ
+  *@brief   JY901UartInit	HC-05ä½¿ç”¨çš„ä¸²å£åˆå§‹åŒ–
+  *@param   USART_TypeDef * USARTBASE	ä¸²å£å·
+  *			u32 BaudRate	æ³¢ç‰¹ç‡
   *@retval    None
   */
 void JY901UartInit(USART_TypeDef * USARTBASE,u32 BaudRate){
-	u16 GPIO_Pin_Tx;			//TxÒı½Å
-	u16 GPIO_Pin_Rx;			//RxÒı½Å
+	u16 GPIO_Pin_Tx;			//Txå¼•è„š
+	u16 GPIO_Pin_Rx;			//Rxå¼•è„š
 	GPIO_TypeDef * GPIOBase;	//GPIOBase
 	
-	/* ¶¨Òå³õÊ¼»¯½á¹¹Ìå --------------------------------------------------------*/
+	/* å®šä¹‰åˆå§‹åŒ–ç»“æ„ä½“ --------------------------------------------------------*/
 	GPIO_InitTypeDef GPIO_InitStructure;
 	USART_InitTypeDef USART_InitStructure;
 
-	/* ÅäÖÃ²ÎÊı ----------------------------------------------------------------*/
+	/* é…ç½®å‚æ•° ----------------------------------------------------------------*/
 	if(USARTBASE == USART1){
 		GPIOBase = GPIOA;
 		GPIO_Pin_Tx = GPIO_Pin_9;
@@ -340,66 +352,66 @@ void JY901UartInit(USART_TypeDef * USARTBASE,u32 BaudRate){
 		GPIO_Pin_Rx = GPIO_Pin_11;
 	}
 
-	/* Ê¹ÄÜÊ±ÖÓ ----------------------------------------------------------------*/
+	/* ä½¿èƒ½æ—¶é’Ÿ ----------------------------------------------------------------*/
 	if(USARTBASE == USART1){
-		RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1,ENABLE);	//Ê¹ÄÜUART1Ê±ÖÓ
-		RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);	//Ê¹ÄÜGPIOAÊ±ÖÓ
+		RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1,ENABLE);	//ä½¿èƒ½UART1æ—¶é’Ÿ
+		RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);	//ä½¿èƒ½GPIOAæ—¶é’Ÿ
 	}else if(USARTBASE == USART2){
-		RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2,ENABLE);	//Ê¹ÄÜUART2Ê±ÖÓ
-		RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);	//Ê¹ÄÜGPIOAÊ±ÖÓ
+		RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2,ENABLE);	//ä½¿èƒ½UART2æ—¶é’Ÿ
+		RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);	//ä½¿èƒ½GPIOAæ—¶é’Ÿ
 	}else if(USARTBASE == USART3){
-		RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3,ENABLE);	//Ê¹ÄÜUART3Ê±ÖÓ
-		RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);	//Ê¹ÄÜGPIOBÊ±ÖÓ
+		RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3,ENABLE);	//ä½¿èƒ½UART3æ—¶é’Ÿ
+		RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);	//ä½¿èƒ½GPIOBæ—¶é’Ÿ
 	}
 
- 	USART_DeInit(USARTBASE);  								//¸´Î»´®¿Ú
+ 	USART_DeInit(USARTBASE);  								//å¤ä½ä¸²å£
 
-	/* GPIO¶Ë¿ÚÉèÖÃ -------------------------------------------------------------*/
+	/* GPIOç«¯å£è®¾ç½® -------------------------------------------------------------*/
 	//USARTx_TX   
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_Tx; 			//TXD
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;		//¸´ÓÃÍÆÍìÊä³ö
-    GPIO_Init(GPIOBase, &GPIO_InitStructure); 			//³õÊ¼»¯TxD
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;		//å¤ç”¨æ¨æŒ½è¾“å‡º
+    GPIO_Init(GPIOBase, &GPIO_InitStructure); 			//åˆå§‹åŒ–TxD
 
 	//USARTx_RX	  
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_Rx;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;	//¸¡¿ÕÊäÈë
-    GPIO_Init(GPIOBase, &GPIO_InitStructure);  				//³õÊ¼»¯RxD
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;	//æµ®ç©ºè¾“å…¥
+    GPIO_Init(GPIOBase, &GPIO_InitStructure);  				//åˆå§‹åŒ–RxD
 
-	/* USARTx ³õÊ¼»¯ÉèÖÃ --------------------------------------------------*/
-	USART_InitStructure.USART_BaudRate = BaudRate;					//²¨ÌØÂÊ
-	USART_InitStructure.USART_WordLength = USART_WordLength_8b;		//×Ö³¤Îª8Î»Êı¾İ¸ñÊ½	£¨Ä¬ÈÏÄ£Ê½£©
-	USART_InitStructure.USART_StopBits = USART_StopBits_1;			//Ò»¸öÍ£Ö¹Î»
-	USART_InitStructure.USART_Parity = USART_Parity_No;				//ÎŞÆæÅ¼Ğ£ÑéÎ»
-	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;//ÎŞÓ²¼şÊı¾İÁ÷¿ØÖÆ
-	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;	//ÊÕ·¢Ä£Ê½
-    USART_Init(USARTBASE, &USART_InitStructure); 					//³õÊ¼»¯´®¿Úx
+	/* USARTx åˆå§‹åŒ–è®¾ç½® --------------------------------------------------*/
+	USART_InitStructure.USART_BaudRate = BaudRate;					//æ³¢ç‰¹ç‡
+	USART_InitStructure.USART_WordLength = USART_WordLength_8b;		//å­—é•¿ä¸º8ä½æ•°æ®æ ¼å¼	ï¼ˆé»˜è®¤æ¨¡å¼ï¼‰
+	USART_InitStructure.USART_StopBits = USART_StopBits_1;			//ä¸€ä¸ªåœæ­¢ä½
+	USART_InitStructure.USART_Parity = USART_Parity_No;				//æ— å¥‡å¶æ ¡éªŒä½
+	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;//æ— ç¡¬ä»¶æ•°æ®æµæ§åˆ¶
+	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;	//æ”¶å‘æ¨¡å¼
+    USART_Init(USARTBASE, &USART_InitStructure); 					//åˆå§‹åŒ–ä¸²å£x
 	
-	/* ÖĞ¶ÏÅäÖÃ -----------------------------------------------------------*/
+	/* ä¸­æ–­é…ç½® -----------------------------------------------------------*/
 	USART_ITConfig(USARTBASE,USART_IT_TC,DISABLE);
-	USART_ITConfig(USARTBASE,USART_IT_RXNE,ENABLE);					//´®¿Ú½ÓÊÕÖĞ¶Ï
+	USART_ITConfig(USARTBASE,USART_IT_RXNE,ENABLE);					//ä¸²å£æ¥æ”¶ä¸­æ–­
     USART_ITConfig(USARTBASE,USART_IT_IDLE,DISABLE);				
 	
 	
-	USART_Cmd(USARTBASE, ENABLE);                  					//Ê¹ÄÜ´®¿Úx
+	USART_Cmd(USARTBASE, ENABLE);                  					//ä½¿èƒ½ä¸²å£x
 	
-	/* NVIC ÅäÖÃ ----------------------------------------------------------*/
+	/* NVIC é…ç½® ----------------------------------------------------------*/
 	UARTRxNVICInit(USARTBASE);
 	
-	USART_ClearFlag(USARTBASE, USART_FLAG_TC);						//Çå³ı·¢ËÍ³É¹¦±êÖ¾
+	USART_ClearFlag(USARTBASE, USART_FLAG_TC);						//æ¸…é™¤å‘é€æˆåŠŸæ ‡å¿—
 	
 }
 
 /**
   *@brief   RxNVICInit
-  *@param   USART_TypeDef * USARTBASE	//´®¿ÚºÅ
+  *@param   USART_TypeDef * USARTBASE	//ä¸²å£å·
   *@retval    None
   */
 void UARTRxNVICInit(USART_TypeDef * USARTBASE){
 	IRQn_Type IRQChannel;
 	NVIC_InitTypeDef NVIC_InitStructure;
 
-	/* È·ÈÏ²ÎÊı ---------------------------------------------------------------*/
+	/* ç¡®è®¤å‚æ•° ---------------------------------------------------------------*/
 	if(USARTBASE == USART1){
 		IRQChannel = USART1_IRQn;
 	}else if(USARTBASE == USART2){
@@ -408,24 +420,24 @@ void UARTRxNVICInit(USART_TypeDef * USARTBASE){
 		IRQChannel = USART3_IRQn;
 	}
 	
-	/* NVIC³õÊ¼»¯ -------------------------------------------------------------*/
+	/* NVICåˆå§‹åŒ– -------------------------------------------------------------*/
 	NVIC_InitStructure.NVIC_IRQChannel = IRQChannel;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;		//ÇÀÕ¼ÓÅÏÈ¼¶1
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1; 				//×ÓÓÅÏÈ¼¶1
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;					//Ê¹ÄÜÖĞ¶ÏºÅ
-	NVIC_Init(&NVIC_InitStructure);									//³õÊ¼»¯NVIC
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;		//æŠ¢å ä¼˜å…ˆçº§1
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1; 				//å­ä¼˜å…ˆçº§1
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;					//ä½¿èƒ½ä¸­æ–­å·
+	NVIC_Init(&NVIC_InitStructure);									//åˆå§‹åŒ–NVIC
 }
 
 /**
   *@brief   DMATCNVICInit
-  *@param   DMA_Channel_TypeDef * DMAChannelRx	//DMAÍ¨µÀºÅ
+  *@param   DMA_Channel_TypeDef * DMAChannelRx	//DMAé€šé“å·
   *@retval    None
   */
 void DMATCNVICInit(DMA_Channel_TypeDef * DMAChannelRx){
 	IRQn_Type IRQChannel;
 	NVIC_InitTypeDef NVIC_InitStructure;
 
-	/* È·ÈÏ²ÎÊı ---------------------------------------------------------------*/
+	/* ç¡®è®¤å‚æ•° ---------------------------------------------------------------*/
 	if(DMAChannelRx == DMA1_Channel5){
 		IRQChannel = DMA1_Channel5_IRQn;
 	}else if(DMAChannelRx == DMA1_Channel6){
@@ -434,12 +446,12 @@ void DMATCNVICInit(DMA_Channel_TypeDef * DMAChannelRx){
 		IRQChannel = DMA1_Channel3_IRQn;
 	}
 	
-	/* NVIC³õÊ¼»¯ -------------------------------------------------------------*/
+	/* NVICåˆå§‹åŒ– -------------------------------------------------------------*/
 	NVIC_InitStructure.NVIC_IRQChannel = IRQChannel;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;		//ÇÀÕ¼ÓÅÏÈ¼¶1
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0; 				//×ÓÓÅÏÈ¼¶2
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;					//Ê¹ÄÜÖĞ¶ÏºÅ
-	NVIC_Init(&NVIC_InitStructure);									//³õÊ¼»¯NVIC
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;		//æŠ¢å ä¼˜å…ˆçº§1
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2; 				//å­ä¼˜å…ˆçº§2
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;					//ä½¿èƒ½ä¸­æ–­å·
+	NVIC_Init(&NVIC_InitStructure);									//åˆå§‹åŒ–NVIC
 }
 
 /******************* (C) COPYRIGHT 2014 STMicroelectronics *****END OF FILE****/

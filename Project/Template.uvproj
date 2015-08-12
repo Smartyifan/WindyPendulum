@@ -347,7 +347,7 @@
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
             <VariousControls>
-              <MiscControls></MiscControls>
+              <MiscControls>--c99</MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F10X_MD</Define>
               <Undefine></Undefine>
               <IncludePath>..\Core;..\Library\inc;..\User;..\SYSTEM;..\Hardware</IncludePath>
@@ -460,6 +460,16 @@
               <FileName>upmac.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Hardware\UpperMachine\upmac.c</FilePath>
+            </File>
+            <File>
+              <FileName>motionctr.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Hardware\MotionCtr\motionctr.c</FilePath>
+            </File>
+            <File>
+              <FileName>fuzzy.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Hardware\FuzzyCtrl\fuzzy.c</FilePath>
             </File>
           </Files>
         </Group>
