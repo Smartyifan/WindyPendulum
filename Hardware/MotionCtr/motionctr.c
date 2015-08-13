@@ -74,20 +74,22 @@ void MotionCtrParamInit(MotionCtrStr * MotionCtrl){
 	MotionCtrl->MotionMode = Stop;	//初始化模式为停止运动模式
 	
 	/* 单摆模式参数初始化 -------------------------------*/
-	MotionCtrl->SinglePendParam.Angle = 0;
-	MotionCtrl->SinglePendParam.Period = 78;
-	MotionCtrl->SinglePendParam.RolAmplitude = 0;
-	MotionCtrl->SinglePendParam.PitchAmplitude = 0;
-	
+	MotionCtrl->SinglePendParam.RolCharging 	= 0;
+	MotionCtrl->SinglePendParam.PitchCharging 	= 0;
+	MotionCtrl->SinglePendParam.Angle 			= 0;
+	MotionCtrl->SinglePendParam.Period 			= 78;
+	MotionCtrl->SinglePendParam.RolAmplitude 	= 0;
+	MotionCtrl->SinglePendParam.PitchAmplitude 	= 0;
+	MotionCtrl->SinglePendParam.Charged 		= ERROR;
 	/* 双摆模式参数初始化 -----------------------------*/
-	MotionCtrl->DoublePendParam.RolPeriod = 0;
-	MotionCtrl->DoublePendParam.RolAmplitude = 0;
-	MotionCtrl->DoublePendParam.PitchPeriod = 0;
-	MotionCtrl->DoublePendParam.PitchAmplitude = 0;
+	MotionCtrl->DoublePendParam.RolPeriod 		= 0;
+	MotionCtrl->DoublePendParam.RolAmplitude 	= 0;
+	MotionCtrl->DoublePendParam.PitchPeriod 	= 0;
+	MotionCtrl->DoublePendParam.PitchAmplitude 	= 0;
 	
 	 /* 稳定点模式参数初始化 -----------------------------*/
-	MotionCtrl->StableParam.PitchExpect = 0;
-	MotionCtrl->StableParam.RolExpect = 0;
+	MotionCtrl->StableParam.PitchExpect 		= 0;
+	MotionCtrl->StableParam.RolExpect 			= 0;
 	
 	/* 轨迹跟踪模式初始化 -------------------------------*/
 }
@@ -105,11 +107,11 @@ void SinglePendCtrl(float RolCule,float PitchCule){
 	/* 改变时间 -------------------------------------------------*/
 	Tick++;	
 	if(Tick 	>= 	MontionControl.SinglePendParam.Period ||
-	   MontionControl.MotionMode	==	Stop)			Tick = 0;
+	   MontionControl.MotionMode	==	Stop)			
+		Tick = 0;
 
-	
 	/* 计算驱动力 -----------------------------------------------*/
-	/* 周期2s，为固有周期，可用周期性驱动力 -----------------------------------------------*/
+	/* 周期1.56s，为固有周期，可用周期性驱动力 -----------------------------------------------*/
 	if(MontionControl.SinglePendParam.Period	==	78){
 		if(Tick < MontionControl.SinglePendParam.Period/2){					//RolForce
 			RolpForce = RolpPendPID.PIDout * 
@@ -128,7 +130,7 @@ void SinglePendCtrl(float RolCule,float PitchCule){
 		}
 
 		
-	/* 周期不为2s，需要使用拟合驱动力实现 ---------------------------------------------------*/
+	/* 周期不为1.56s，需要使用拟合驱动力实现 ---------------------------------------------------*/
 	}else{
 		if(Tick < MontionControl.SinglePendParam.Period/2){					//RolForce
 			RolpForce = angle2ZKB(

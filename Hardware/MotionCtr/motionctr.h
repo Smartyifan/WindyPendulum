@@ -35,6 +35,8 @@ typedef struct {
 		s16 RolCharging;		//Rol轴充能力
 		s16 PitchCharging;		//Pitch充能力
 		
+		ErrorStatus Charged;	//充能完成标志
+		
 		s16 RolPendForce;		//单摆运动时驱动力幅值
 		s16 PitchPendForce;				
 

@@ -179,36 +179,47 @@ void DMA1_Channel6_IRQHandler(void){
 		{
 			/* 当模式为单摆或双摆时，计算摆幅，并调整控制量峰值 --------------------------*/
 			if(MontionControl.MotionMode == SinglePend ||  MontionControl.MotionMode == DoublePend){
+				/* 充能阶段 --------------------------------------------*/
+				if(MontionControl.SinglePendParam.Charged == ERROR){		//未充能成功
+					motor1 = MontionControl.SinglePendParam.PitchCharging;	//Pitch充能
+					motor4 = MontionControl.SinglePendParam.RolCharging;	//Rol充能
+					PWM_SET(motor1,motor2,motor3,motor4);
+				}
 				/* 滑动角度 --------------------------------------------*/
 				AnlgeSlide(&JY901.Rol,JY901.AngCuled.RolCuled-JY901.ZeroDirft.RolZeroDirft);		//Rol
 				AnlgeSlide(&JY901.Pitch,JY901.AngCuled.PitchCuled-JY901.ZeroDirft.PitchZeroDirft);	//Pitch
 				
 				//计算角速度
-				JY901.dRol[1] = JY901.dRol[0];					//Rol
-				JY901.dRol[0] = JY901.Rol[0]-JY901.Rol[1];
-				JY901.dPitch[1] = JY901.dPitch[0];				//Pitch
-				JY901.dPitch[0] = JY901.Pitch[0] - JY901.Pitch[1]; 
+				JY901.dRol[1] 	= 	JY901.dRol[0];						//Rol
+				JY901.dRol[0] 	= 	JY901.Rol[0]	-	JY901.Rol[1];
+				JY901.dPitch[1] = 	JY901.dPitch[0];					//Pitch
+				JY901.dPitch[0] = 	JY901.Pitch[0] 	- 	JY901.Pitch[1]; 
 				
 				/* 判断摆幅并根据摆幅改变一次PIDout -------------------------------------*/
 				if(JY901.Rol[1] > 0){										//Rol
 					if(JY901.dRol[0]<=0	&&	JY901.dRol[1]>=0){
+					/* 若到达预定角度附近，则充能完成 -----------------------------------*/
+						if(MontionControl.SinglePendParam.Charged == ERROR){
+							if(abs(JY901.Rol[1]-MontionControl.SinglePendParam.RolAmplitude) < 2)
+								MontionControl.SinglePendParam.Charged = SUCCESS;
+						}
 						
 						
 						MontionControl.eRolp_Amplitude[1] = MontionControl.eRolp_Amplitude[0];
-						MontionControl.eRolp_Amplitude[0] = MontionControl.SinglePendParam.RolAmplitude - JY901.Rol[1];		//Rol正摆幅
-						if(MontionControl.eRolp_Amplitude[0] > 0.1){
+						MontionControl.eRolp_Amplitude[0] = MontionControl.SinglePendParam.RolAmplitude - JY901.Rol[1];		//Rol正摆幅偏差
+						if(MontionControl.eRolp_Amplitude[0] > 0.1){				//峰值PID调节
 							
 							RolpPendPID.Iout += RolpPendPID.Ki *  MontionControl.eRolp_Amplitude[0];
 							RolpPendPID.PIDout = MontionControl.SinglePendParam.RolPendForce
 													+ RolpPendPID.Kp * (MontionControl.eRolp_Amplitude[0])
 													+ RolpPendPID.Iout
-													+ RolpPendPID.Kd * (MontionControl.eRolp_Amplitude[0] - MontionControl.eRolp_Amplitude[1]);		//Rol
+													+ RolpPendPID.Kd * (MontionControl.eRolp_Amplitude[0] - MontionControl.eRolp_Amplitude[1]);		
 						}
 					}
 				}else if(JY901.Rol[1] < 0){
 					if(JY901.dRol[0]>=0	&&	JY901.dRol[1]<=0){  
 						MontionControl.eRoln_Amplitude[1] = MontionControl.eRoln_Amplitude[0];
-						MontionControl.eRoln_Amplitude[0] = MontionControl.SinglePendParam.RolAmplitude + JY901.Rol[1];		//Rol负摆幅
+						MontionControl.eRoln_Amplitude[0] = MontionControl.SinglePendParam.RolAmplitude + JY901.Rol[1];		//Rol负摆幅偏差
 						
 						if(MontionControl.eRoln_Amplitude[0] > 0.1){
 							
@@ -223,11 +234,15 @@ void DMA1_Channel6_IRQHandler(void){
 				
 				if(JY901.Pitch[1] > 0){										//Pitch
 					if(JY901.dPitch[0]<=0   &&   JY901.dPitch[1]>=0){
-					
+						/* 若到达预定角度附近，则充能完成 -----------------------------------*/
+						if(MontionControl.SinglePendParam.Charged == ERROR)
+							if(abs(JY901.Rol[1]-MontionControl.SinglePendParam.PitchAmplitude) < 2)
+								MontionControl.SinglePendParam.Charged = SUCCESS;
+
 						amplitudeP = JY901.Pitch[1];						//查看幅度
 
 						MontionControl.ePitchp_Amplitude[1] = MontionControl.ePitchp_Amplitude[0];
-						MontionControl.ePitchp_Amplitude[0] = MontionControl.SinglePendParam.PitchAmplitude - JY901.Pitch[1];	//Pitch正摆幅
+						MontionControl.ePitchp_Amplitude[0] = MontionControl.SinglePendParam.PitchAmplitude - JY901.Pitch[1];	//Pitch正摆幅偏差
 						
 						if(MontionControl.ePitchp_Amplitude[0] > 0.1){
 							
@@ -235,7 +250,7 @@ void DMA1_Channel6_IRQHandler(void){
 							PitchpPendPID.PIDout = MontionControl.SinglePendParam.PitchPendForce 
 													+ PitchpPendPID.Kp * (MontionControl.ePitchp_Amplitude[0])
 													+ PitchpPendPID.Iout
-													+ PitchpPendPID.Kd * (MontionControl.ePitchp_Amplitude[0] - MontionControl.ePitchp_Amplitude[1]);	//Pitch
+													+ PitchpPendPID.Kd * (MontionControl.ePitchp_Amplitude[0] - MontionControl.ePitchp_Amplitude[1]);	
 						}
 						
 					} 
@@ -245,7 +260,7 @@ void DMA1_Channel6_IRQHandler(void){
 						amplitudeN = JY901.Pitch[1];						//查看幅度
 
 						MontionControl.ePitchn_Amplitude[1] = MontionControl.ePitchn_Amplitude[0];
-						MontionControl.ePitchn_Amplitude[0] = MontionControl.SinglePendParam.PitchAmplitude + JY901.Pitch[1];	//Pitch负摆幅
+						MontionControl.ePitchn_Amplitude[0] = MontionControl.SinglePendParam.PitchAmplitude + JY901.Pitch[1];	//Pitch负摆幅偏差
 						
 						if(MontionControl.ePitchn_Amplitude[0] > 0.1){
 
