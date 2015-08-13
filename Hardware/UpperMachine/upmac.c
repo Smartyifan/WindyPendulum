@@ -34,6 +34,9 @@
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 s16 Amp2ZKB(float a){return (s16)(-0.048*a*a +2.6119*a+39.2796);}
+s16 Step2ZKBRol(float a){return (s16)(160.6601*a -149.132);}
+s16 Step2ZKBPitch(float a){return (s16)(154.21*a -136.947);}
+
 /* Private functions ---------------------------------------------------------*/
 /**
   *@brief   Initial
@@ -148,12 +151,15 @@ void DetectCmd(void){
 				memcpy(&temp.c[0],&HC05.RxData[2],4);	
 				MontionControl.SinglePendParam.Amplitude = temp.f;
 				MontionControl.SinglePendParam.RolAmplitude =	MontionControl.SinglePendParam.Amplitude	*	
-																					cos(MontionControl.SinglePendParam.Angle);
+																					cos(MontionControl.SinglePendParam.Angle*0.0174444);
 				MontionControl.SinglePendParam.PitchAmplitude =	MontionControl.SinglePendParam.Amplitude	*	
-																					sin(MontionControl.SinglePendParam.Angle);
+																					sin(MontionControl.SinglePendParam.Angle*0.0174444);
 				
-				MontionControl.SinglePendParam.RolPendForce	 	= 	Amp2ZKB(MontionControl.SinglePendParam.RolAmplitude);
+				MontionControl.SinglePendParam.RolPendForce	 	= 	Amp2ZKB(MontionControl.SinglePendParam.RolAmplitude);		//驱动力幅度
 				MontionControl.SinglePendParam.PitchPendForce 	= 	Amp2ZKB(MontionControl.SinglePendParam.PitchAmplitude);
+				
+				MontionControl.SinglePendParam.RolCharging		=	Step2ZKBRol(MontionControl.SinglePendParam.RolAmplitude);	//充能力
+				MontionControl.SinglePendParam.PitchCharging	=	Step2ZKBRol(MontionControl.SinglePendParam.PitchAmplitude);
 				HC05printf(&HC05," Amplitude = %f\r\n",temp.f);
 				break;
 			}
@@ -161,14 +167,17 @@ void DetectCmd(void){
 				memcpy(&temp.c[0],&HC05.RxData[2],4);	
 				MontionControl.SinglePendParam.Angle = temp.f;
 				MontionControl.SinglePendParam.RolAmplitude =	MontionControl.SinglePendParam.Amplitude	*	
-																					cos(MontionControl.SinglePendParam.Angle);
+																					cos(MontionControl.SinglePendParam.Angle*0.0174444);
 				MontionControl.SinglePendParam.PitchAmplitude =	MontionControl.SinglePendParam.Amplitude	*	
-																					sin(MontionControl.SinglePendParam.Angle);
+																					sin(MontionControl.SinglePendParam.Angle*0.0174444);
 				
-				MontionControl.SinglePendParam.RolPendForce 	= 	Amp2ZKB(MontionControl.SinglePendParam.RolAmplitude);
+				MontionControl.SinglePendParam.RolPendForce 	= 	Amp2ZKB(MontionControl.SinglePendParam.RolAmplitude);			//驱动力幅度
 				MontionControl.SinglePendParam.PitchPendForce 	= 	Amp2ZKB(MontionControl.SinglePendParam.PitchAmplitude);
 
-				HC05printf(&HC05," Angle = %f\r\n",MontionControl.SinglePendParam.Angle);
+				MontionControl.SinglePendParam.RolCharging		=	Step2ZKBRol(MontionControl.SinglePendParam.RolAmplitude);	//充能力
+				MontionControl.SinglePendParam.PitchCharging	=	Step2ZKBRol(MontionControl.SinglePendParam.PitchAmplitude);
+
+				HC05printf(&HC05," Angle = %f\r\n",MontionControl.SinglePendParam.Angle); 
 				break;
 			}
 			/* 双摆运动 --------------------------*/
@@ -240,6 +249,9 @@ void Motor_Stop(void)
 
 	//油门调整为0
 	PWM_SET(0,0,0,0);
+	
+	//充能标志清位
+	MontionControl.SinglePendParam.Charged = ERROR;
 // 	TIM4->CCR1 = 1000;		//设置占空比ZKB
 // 	TIM4->CCR2 = 1000;
 // 	TIM4->CCR3 = 1000;

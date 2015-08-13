@@ -12,6 +12,7 @@
   */  
 #include "MotionCtr/motionctr.h"
 #include <math.h>
+#include <stdlib.h>
 /* Includes ------------------------------------------------------------------*/
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
@@ -114,19 +115,20 @@ void SinglePendCtrl(float RolCule,float PitchCule){
 	/* 周期1.56s，为固有周期，可用周期性驱动力 -----------------------------------------------*/
 	if(MontionControl.SinglePendParam.Period	==	78){
 		if(Tick < MontionControl.SinglePendParam.Period/2){					//RolForce
-			RolpForce = RolpPendPID.PIDout * 
-							sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	);
+			RolnForce = 5+RolnPendPID.PIDout * 
+							(sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
 		}else if(Tick >= MontionControl.SinglePendParam.Period/2){
-			RolnForce =  -RolnPendPID.PIDout * 
-							sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	);
+			RolpForce = 5-RolpPendPID.PIDout * 
+							(sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
+
 		}
 		
 		if(Tick < MontionControl.SinglePendParam.Period/2){					//PitchForce		
-			PitchpForce = PitchpPendPID.PIDout * 
-							sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	);
+			PitchnForce = PitchnPendPID.PIDout * 
+							(sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
 		}else if(Tick >= MontionControl.SinglePendParam.Period/2){
-			PitchnForce = -PitchnPendPID.PIDout * 
-							sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	);
+			PitchpForce = -PitchpPendPID.PIDout * 
+							(sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
 		}
 
 		
@@ -135,31 +137,31 @@ void SinglePendCtrl(float RolCule,float PitchCule){
 		if(Tick < MontionControl.SinglePendParam.Period/2){					//RolForce
 			RolpForce = angle2ZKB(
 							MontionControl.SinglePendParam.RolAmplitude * 
-							sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
+							cos(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
 		}else if(Tick >= MontionControl.SinglePendParam.Period/2){
 			RolnForce =  angle2ZKB(
 						  -	MontionControl.SinglePendParam.RolAmplitude * 
-							sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
+							cos(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
 		}
 		
 		if(Tick < MontionControl.SinglePendParam.Period/2){					//PitchForce		
 			PitchpForce = angle2ZKB(
 							MontionControl.SinglePendParam.PitchAmplitude * 
-							sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
+							cos(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
 		}else if(Tick >= MontionControl.SinglePendParam.Period/2){
 			PitchnForce = angle2ZKB(
 						 -	MontionControl.SinglePendParam.PitchAmplitude * 
-							sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
+							cos(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
 		}
 
 
 	}
 	
 	/* 设置motor值 ----------------------------------------------*/
-	motor1 = PitchpForce;
-	motor2 = RolnForce;
-	motor3 = PitchnForce;
-	motor4 = RolpForce;
+	motor1 = (s16)PitchpForce;
+	motor2 = (s16)RolnForce;
+	motor3 = (s16)PitchnForce;
+	motor4 = (s16)RolpForce;
 	
 	/* 根据motor值驱动电机 --------------------------------------*/
 	PWM_SET(motor1,motor2,motor3,motor4);
@@ -264,7 +266,7 @@ void StablePlotCtrl(float Role,float Pitche){
 	motor3 += (s16)negdeluPitch;
 	motor4 += (s16)plusdeltuRol;
 
-	/* 根据油门控制电机 -------------------------------------------------------*/
+	/*vc 根据油门控制电机 -------------------------------------------------------*/
 	PWM_SET(motor1,motor2,motor3,motor4);
 }	
 /**
