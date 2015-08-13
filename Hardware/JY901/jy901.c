@@ -113,9 +113,7 @@ void USART2_IRQHandler(void){
   */
 u16 i=0;  
 void DMA1_Channel6_IRQHandler(void){
-   
 	static float RolZeroDirftAll=0,PitchZeroDirftAll=0;//零漂累计变量	
-	static float amplitude;		//调试参数，可删除
 	
 	if(DMA_GetITStatus(DMA1_IT_TC6) == SET){	
 
@@ -177,65 +175,103 @@ void DMA1_Channel6_IRQHandler(void){
 		/* 基于JY901的控制-----------------------------------------------------------------------*/
 		else if(DetectZeroDrift == DISABLE && DriftDetected == SUCCESS && MotorStart == ENABLE)  //只有当计算偏差计算完成时才启动PID控制
 		{
+			/* 滑动角度 --------------------------------------------*/
+			AnlgeSlide(&JY901.Rol,JY901.AngCuled.RolCuled-JY901.ZeroDirft.RolZeroDirft);		//Rol
+			AnlgeSlide(&JY901.Pitch,JY901.AngCuled.PitchCuled-JY901.ZeroDirft.PitchZeroDirft);	//Pitch
+			
+
+			
 			/* 当模式为单摆或双摆时，计算摆幅，并调整控制量峰值 --------------------------*/
 			if(MontionControl.MotionMode == SinglePend ||  MontionControl.MotionMode == DoublePend){
-				/* 滑动角度 --------------------------------------------*/
-				AnlgeSlide(&JY901.Rol,JY901.AngCuled.RolCuled-JY901.ZeroDirft.RolZeroDirft);		//Rol
-				AnlgeSlide(&JY901.Pitch,JY901.AngCuled.PitchCuled-JY901.ZeroDirft.PitchZeroDirft);	//Pitch
+				/* 充能阶段 --------------------------------------------*/
+				if(MontionControl.SinglePendParam.Charged == ERROR){		//未充能成功
+					motor1 = MontionControl.SinglePendParam.PitchCharging;	//Pitch充能
+					motor4 = MontionControl.SinglePendParam.RolCharging;	//Rol充能
+					PWM_SET(motor1,motor2,motor3,motor4);
+				}
 				
-				//计算角速度
-				JY901.dRol[1] = JY901.dRol[0];					//Rol
-				JY901.dRol[0] = JY901.Rol[0]-JY901.Rol[1];
-				JY901.dPitch[1] = JY901.dPitch[0];				//Pitch
-				JY901.dPitch[0] = JY901.Pitch[0] - JY901.Pitch[1]; 
 				
+				/* 计算角速度 -----------------------------------------*/
+				JY901.dRol[1] 	= 	JY901.dRol[0];						//Rol
+				JY901.dRol[0] 	= 	JY901.Rol[0]	-	JY901.Rol[1];
+				JY901.dPitch[1] = 	JY901.dPitch[0];					//Pitch
+				JY901.dPitch[0] = 	JY901.Pitch[0] 	- 	JY901.Pitch[1]; 
+
 				/* 判断摆幅并根据摆幅改变一次PIDout -------------------------------------*/
 				if(JY901.Rol[1] > 0){										//Rol
 					if(JY901.dRol[0]<=0	&&	JY901.dRol[1]>=0){
+					/* 若到达预定角度附近，则充能完成 -----------------------------------*/
+						if(MontionControl.SinglePendParam.Charged == ERROR){
+							if(JY901.Rol[1] > 2)
+								MontionControl.SinglePendParam.Charged = SUCCESS;
+						}
 						
-						amplitude = JY901.Rol[1];						//查看幅度
-						
+						/* 滑动偏差数组 -------------------*/						
 						MontionControl.eRolp_Amplitude[1] = MontionControl.eRolp_Amplitude[0];
-						MontionControl.eRolp_Amplitude[0] = MontionControl.SinglePendParam.RolAmplitude - JY901.Rol[1];		//Rol正摆幅
-						
-						RolpPendPID.PIDout += RolpPendPID.Kp * (MontionControl.eRolp_Amplitude[0])
-												+RolpPendPID.Kd * (MontionControl.eRolp_Amplitude[0] - MontionControl.eRolp_Amplitude[1]);		//Rol
+						MontionControl.eRolp_Amplitude[0] = MontionControl.SinglePendParam.RolAmplitude - JY901.Rol[1];		//Rol正摆幅偏差
+						/* 计算PID ------------------------*/							
+						RolpPendPID.Iout += RolpPendPID.Ki *  MontionControl.eRolp_Amplitude[0];
+						RolpPendPID.PIDout = MontionControl.SinglePendParam.RolPendForce
+												+ RolpPendPID.Kp * (MontionControl.eRolp_Amplitude[0])
+												+ RolpPendPID.Iout;		
 					}
 				}else if(JY901.Rol[1] < 0){
 					if(JY901.dRol[0]>=0	&&	JY901.dRol[1]<=0){  
+						/* 滑动偏差数组 -------------------*/
 						MontionControl.eRoln_Amplitude[1] = MontionControl.eRoln_Amplitude[0];
-						MontionControl.eRoln_Amplitude[0] = MontionControl.SinglePendParam.RolAmplitude + JY901.Rol[1];		//Rol负摆幅
-						
-						RolnPendPID.PIDout += RolnPendPID.Kp * 	(MontionControl.eRoln_Amplitude[0])
-												+ RolnPendPID.Kd * (MontionControl.eRoln_Amplitude[0] - MontionControl.eRoln_Amplitude[1]);
+						MontionControl.eRoln_Amplitude[0] = MontionControl.SinglePendParam.RolAmplitude + JY901.Rol[1];		//Rol负摆幅偏差
+						/* 计算PID ------------------------*/						
+						RolnPendPID.Iout  += RolnPendPID.Ki * MontionControl.eRoln_Amplitude[0];
+						RolnPendPID.PIDout = MontionControl.SinglePendParam.RolPendForce
+												+ RolnPendPID.Kp * 	(MontionControl.eRoln_Amplitude[0])
+												+ RolnPendPID.Iout;
 					}
 				}
+				
 				if(JY901.Pitch[1] > 0){										//Pitch
 					if(JY901.dPitch[0]<=0   &&   JY901.dPitch[1]>=0){
+						/* 若到达预定角度附近，则充能完成 -----------------------------------*/
+						if(MontionControl.SinglePendParam.Charged == ERROR){
+							if(JY901.Pitch[1] > 2)
+								MontionControl.SinglePendParam.Charged = SUCCESS;
+						}
+
+						/* 滑动偏差数组 -------------------*/
 						MontionControl.ePitchp_Amplitude[1] = MontionControl.ePitchp_Amplitude[0];
-						MontionControl.ePitchp_Amplitude[0] = MontionControl.SinglePendParam.PitchAmplitude - JY901.Pitch[1];	//Pitch正摆幅
+						MontionControl.ePitchp_Amplitude[0] = MontionControl.SinglePendParam.PitchAmplitude - JY901.Pitch[1];	//Pitch正摆幅偏差
+						/* 计算PID ------------------------*/
+						PitchpPendPID.Iout  += PitchpPendPID.Ki * MontionControl.ePitchp_Amplitude[0];
+						PitchpPendPID.PIDout = MontionControl.SinglePendParam.PitchPendForce 
+												+ PitchpPendPID.Kp * (MontionControl.ePitchp_Amplitude[0])
+												+ PitchpPendPID.Iout;	
 						
-						PitchpPendPID.PIDout += PitchpPendPID.Kp * (MontionControl.ePitchp_Amplitude[0])
-												+PitchpPendPID.Kd * (MontionControl.ePitchp_Amplitude[0] - MontionControl.ePitchp_Amplitude[1]);	//Pitch
 					} 
 				}else if(JY901.Pitch[1] < 0){
 					if(JY901.dPitch[0]>=0   &&	JY901.dPitch[1]<=0){
-						MontionControl.ePitchn_Amplitude[1] = MontionControl.ePitchn_Amplitude[0];
-						MontionControl.ePitchn_Amplitude[0] = MontionControl.SinglePendParam.PitchAmplitude + JY901.Pitch[1];	//Pitch负摆幅
 						
-						PitchnPendPID.PIDout += PitchnPendPID.Kp * (MontionControl.ePitchn_Amplitude[0])
-												+PitchnPendPID.Kd * (MontionControl.ePitchn_Amplitude[0] - MontionControl.ePitchn_Amplitude[1]);
+						/* 滑动偏差数组 -------------------*/
+						MontionControl.ePitchn_Amplitude[1] = MontionControl.ePitchn_Amplitude[0];
+						MontionControl.ePitchn_Amplitude[0] = MontionControl.SinglePendParam.PitchAmplitude + JY901.Pitch[1];	//Pitch负摆幅偏差
+						/* 计算PID ------------------------*/						
+						PitchnPendPID.Iout  += PitchnPendPID.Ki * MontionControl.ePitchn_Amplitude[0];
+						PitchnPendPID.PIDout = MontionControl.SinglePendParam.PitchPendForce 
+												+ PitchnPendPID.Kp * (MontionControl.ePitchn_Amplitude[0])
+												+ PitchnPendPID.Iout;
 					}
 				}
 				
 			/* 当模式为稳定点时的控制 ----------------------------------------------------*/	
 			}else if(MontionControl.MotionMode == StabelPlot){
 				//稳定点的控制
-				StablePlotCtrl(JY901.AngCuled.RolCuled,JY901.AngCuled.PitchCuled);
+				StablePlotCtrl(JY901.Rol[0]	- JY901.Rol[1],			JY901.Pitch[0] - JY901.Pitch[1]);
 			}
 			
 			/* 在XJI上位机画出数据图形 ----------------------------------------------------*/
-			SimplePlotSend(&HC05,JY901.AngCuled.RolCuled-JY901.ZeroDirft.RolZeroDirft,amplitude,0,0);		//执行时间 7.92us ≈ 8us
+			SimplePlotSend(&HC05,
+						JY901.AngCuled.PitchCuled-JY901.ZeroDirft.PitchZeroDirft,
+						JY901.AngCuled.RolCuled-JY901.ZeroDirft.RolZeroDirft,
+						JY901.Rol[0]	- 	JY901.Rol[1],
+						JY901.Pitch[0] 	- 	JY901.Pitch[1]);		//执行时间 7.92us ≈ 8us
 			
 		}
 		/* 后续处理 ----------------------------------------------------------------------*/

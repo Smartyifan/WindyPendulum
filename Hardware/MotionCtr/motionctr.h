@@ -30,7 +30,16 @@ typedef struct {
 	float ePitchp_Amplitude[2];		//测量Pitch正摆幅偏差
 	float ePitchn_Amplitude[2];		//测量Pitch负摆幅偏差
 	
+	
 	struct {					//单摆参数
+		s16 RolCharging;		//Rol轴充能力
+		s16 PitchCharging;		//Pitch充能力
+		
+		ErrorStatus Charged;	//充能完成标志
+		
+		s16 RolPendForce;		//单摆运动时驱动力幅值
+		s16 PitchPendForce;				
+
 		float Angle;			//与x轴的角度
 		float Amplitude;		//摆幅
 		float Period;			//周期
@@ -59,7 +68,7 @@ extern MotionCtrStr MontionControl;		//运动控制结构体
 void MotionCtrParamInit(MotionCtrStr * MotionCtrl);		//参数初始化
 extern void SinglePendCtrl(float RolCule,float PitchCule);		//单摆模式下的控制函数
 extern void DoublePendCtrl(float RolCule,float PitchCule);			//圆锥摆模式下的控制函数
-extern void StablePlotCtrl(float RolCule,float PitchCule);		//稳定点模式下的控制函数
+extern void StablePlotCtrl(float RolSpeed,float PitchSpeed);		//稳定点模式下的控制函数
 extern void TrackedCtrl(float RolCule,float PitchCule);			//轨迹跟踪模式下的控制函数
 
 #endif

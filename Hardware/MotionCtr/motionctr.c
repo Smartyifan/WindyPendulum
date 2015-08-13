@@ -12,6 +12,7 @@
   */  
 #include "MotionCtr/motionctr.h"
 #include <math.h>
+#include <stdlib.h>
 /* Includes ------------------------------------------------------------------*/
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
@@ -74,20 +75,22 @@ void MotionCtrParamInit(MotionCtrStr * MotionCtrl){
 	MotionCtrl->MotionMode = Stop;	//初始化模式为停止运动模式
 	
 	/* 单摆模式参数初始化 -------------------------------*/
-	MotionCtrl->SinglePendParam.Angle = 0;
-	MotionCtrl->SinglePendParam.Period = 0;
-	MotionCtrl->SinglePendParam.RolAmplitude = 0;
-	MotionCtrl->SinglePendParam.PitchAmplitude = 0;
-	
+	MotionCtrl->SinglePendParam.RolCharging 	= 0;
+	MotionCtrl->SinglePendParam.PitchCharging 	= 0;
+	MotionCtrl->SinglePendParam.Angle 			= 0;
+	MotionCtrl->SinglePendParam.Period 			= 78;
+	MotionCtrl->SinglePendParam.RolAmplitude 	= 0;
+	MotionCtrl->SinglePendParam.PitchAmplitude 	= 0;
+	MotionCtrl->SinglePendParam.Charged 		= ERROR;
 	/* 双摆模式参数初始化 -----------------------------*/
-	MotionCtrl->DoublePendParam.RolPeriod = 0;
-	MotionCtrl->DoublePendParam.RolAmplitude = 0;
-	MotionCtrl->DoublePendParam.PitchPeriod = 0;
-	MotionCtrl->DoublePendParam.PitchAmplitude = 0;
+	MotionCtrl->DoublePendParam.RolPeriod 		= 0;
+	MotionCtrl->DoublePendParam.RolAmplitude 	= 0;
+	MotionCtrl->DoublePendParam.PitchPeriod 	= 0;
+	MotionCtrl->DoublePendParam.PitchAmplitude 	= 0;
 	
 	 /* 稳定点模式参数初始化 -----------------------------*/
-	MotionCtrl->StableParam.PitchExpect = 0;
-	MotionCtrl->StableParam.RolExpect = 0;
+	MotionCtrl->StableParam.PitchExpect 		= 0;
+	MotionCtrl->StableParam.RolExpect 			= 0;
 	
 	/* 轨迹跟踪模式初始化 -------------------------------*/
 }
@@ -105,59 +108,60 @@ void SinglePendCtrl(float RolCule,float PitchCule){
 	/* 改变时间 -------------------------------------------------*/
 	Tick++;	
 	if(Tick 	>= 	MontionControl.SinglePendParam.Period ||
-	   MontionControl.MotionMode	==	Stop)			Tick = 0;
+	   MontionControl.MotionMode	==	Stop)			
+		Tick = 0;
 
-	
 	/* 计算驱动力 -----------------------------------------------*/
-	/* 周期2s，为固有周期，可用周期性驱动力 -----------------------------------------------*/
-	if(MontionControl.SinglePendParam.Period	==	2){
+	/* 周期1.56s，为固有周期，可用周期性驱动力 -----------------------------------------------*/
+	if(MontionControl.SinglePendParam.Period	==	78){
 		if(Tick < MontionControl.SinglePendParam.Period/2){					//RolForce
-			RolpForce = RolpPendPID.PIDout * 
-							sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	);
+			RolnForce = 5+RolnPendPID.PIDout * 
+							(sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
 		}else if(Tick >= MontionControl.SinglePendParam.Period/2){
-			RolnForce =  -RolnPendPID.PIDout * 
-							sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	);
+			RolpForce = 5-RolpPendPID.PIDout * 
+							(sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
+
 		}
 		
 		if(Tick < MontionControl.SinglePendParam.Period/2){					//PitchForce		
-			PitchpForce = PitchpPendPID.PIDout * 
-							sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	);
+			PitchnForce = PitchnPendPID.PIDout * 
+							(sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
 		}else if(Tick >= MontionControl.SinglePendParam.Period/2){
-			PitchnForce = -PitchnPendPID.PIDout * 
-							sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	);
+			PitchpForce = -PitchpPendPID.PIDout * 
+							(sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
 		}
 
 		
-	/* 周期不为2s，需要使用拟合驱动力实现 ---------------------------------------------------*/
+	/* 周期不为1.56s，需要使用拟合驱动力实现 ---------------------------------------------------*/
 	}else{
 		if(Tick < MontionControl.SinglePendParam.Period/2){					//RolForce
 			RolpForce = angle2ZKB(
 							MontionControl.SinglePendParam.RolAmplitude * 
-							sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
+							cos(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
 		}else if(Tick >= MontionControl.SinglePendParam.Period/2){
 			RolnForce =  angle2ZKB(
 						  -	MontionControl.SinglePendParam.RolAmplitude * 
-							sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
+							cos(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
 		}
 		
 		if(Tick < MontionControl.SinglePendParam.Period/2){					//PitchForce		
 			PitchpForce = angle2ZKB(
 							MontionControl.SinglePendParam.PitchAmplitude * 
-							sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
+							cos(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
 		}else if(Tick >= MontionControl.SinglePendParam.Period/2){
 			PitchnForce = angle2ZKB(
 						 -	MontionControl.SinglePendParam.PitchAmplitude * 
-							sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
+							cos(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	));
 		}
 
 
 	}
 	
 	/* 设置motor值 ----------------------------------------------*/
-	motor1 = PitchpForce;
-	motor2 = RolnForce;
-	motor3 = PitchnForce;
-	motor4 = RolpForce;
+	motor1 = (s16)PitchpForce;
+	motor2 = (s16)RolnForce;
+	motor3 = (s16)PitchnForce;
+	motor4 = (s16)RolpForce;
 	
 	/* 根据motor值驱动电机 --------------------------------------*/
 	PWM_SET(motor1,motor2,motor3,motor4);
@@ -209,61 +213,70 @@ void DoublePendCtrl(float RolCule,float PitchCule){
 			float PitchCule	当前Pitch偏差
   *@retval  None
   */
-void StablePlotCtrl(float Role,float Pitche){
-	s8 plusdeltuRol   = 0,		negdeluRol   = 0;
-	s8 plusdeltuPitch = 0,		negdeluPitch = 0;
+void StablePlotCtrl(float RolSpeed,float PitchSpeed){
 	
-	static float Rolerror[2],	Pitcherror[2];
 	
-	s8 eSetRol 	 = 0,	deSetRol   = 0;
-	s8 eSetPitch = 0,	deSetPitch = 0;
-
-	/* 偏差移位 ----------------------------------------------------------------*/
-	FuzzyGetError(&Rolerror,Role);
-	FuzzyGetError(&Pitcherror,Pitche);
+	//阻尼力
+	motor1 = -750 	* 	PitchSpeed;
+	motor2 =  750  	*	RolSpeed;
+	motor3 =  750	*	PitchSpeed;
+	motor4 = -750	*	RolSpeed;
 	
-	/* 将物理论域转换为模糊论域 ------------------------------------------------*/
-	eSetRol  = 	(s8)	(Ke * Rolerror[0] + 0.5); 	//四舍五入取整		Rol
-	deSetRol =  (s8)	(Kc * (Rolerror[0] - Rolerror[1]) + 0.5);	
-	
-	eSetPitch  = (s8)	(Ke * Pitcherror[0] + 0.5); 	//四舍五入取整	Pitch
-	deSetPitch = (s8)	(Kc * (Pitcherror[0] - Pitcherror[1]) + 0.5);
-
-	/* 判断所属模糊集 ----------------------------------------------------------*/
-	if(eSetRol > 6) eSetRol = 6;				//限制范围为-6~6	Rol
-	else if(eSetRol < -6) eSetRol = -6;
-	
-	if(deSetRol > 6) deSetRol = 6;
-	else if(deSetRol < -6) deSetRol = -6;
-
-	if(eSetPitch > 6) eSetPitch = 6;				//限制范围为-6~6	Pitch
-	else if(eSetPitch < -6) eSetPitch = -6;
-	
-	if(deSetPitch > 6) deSetPitch = 6;
-	else if(deSetPitch < -6) deSetPitch = -6;
-
-	/* 查表得出模糊输出 -----------------------------------*/
-	plusdeltuRol = 	PlusFuzCtrlArray[eSetRol+6][deSetRol+6];			//Rol
-	negdeluRol	 = 	NegFuzCtrlArray[eSetRol+6][deSetRol+6];
-	
-	plusdeltuPitch = 	PlusFuzCtrlArray[eSetPitch+6][deSetPitch+6];	//Pitch
-	negdeluPitch   = 	NegFuzCtrlArray[eSetPitch+6][deSetPitch+6];
-
-	/* 乘以增益系数 ---------------------------------------*/
-	plusdeltuRol   *= Ku;			//Rol
-	negdeluRol	   *= Ku;
-
-	plusdeltuPitch *= Ku;			//Pitch
-	negdeluPitch   *= Ku;
-	
-	/* 将增量加入控制 ---------------------------------------------------------*/
-	motor1 += (s16)plusdeltuPitch;
-	motor2 += (s16)negdeluRol;
-	motor3 += (s16)negdeluPitch;
-	motor4 += (s16)plusdeltuRol;
-
-	/* 根据油门控制电机 -------------------------------------------------------*/
 	PWM_SET(motor1,motor2,motor3,motor4);
+// 	s8 plusdeltuRol   = 0,		negdeluRol   = 0;
+// 	s8 plusdeltuPitch = 0,		negdeluPitch = 0;
+// 	
+// 	static float Rolerror[2],	Pitcherror[2];
+// 	
+// 	s8 eSetRol 	 = 0,	deSetRol   = 0;
+// 	s8 eSetPitch = 0,	deSetPitch = 0;
+
+// 	/* 偏差移位 ----------------------------------------------------------------*/
+// 	FuzzyGetError(&Rolerror,Role);
+// 	FuzzyGetError(&Pitcherror,Pitche);
+// 	
+// 	/* 将物理论域转换为模糊论域 ------------------------------------------------*/
+// 	eSetRol  = 	(s8)	(Ke * Rolerror[0] + 0.5); 	//四舍五入取整		Rol
+// 	deSetRol =  (s8)	(Kc * (Rolerror[0] - Rolerror[1]) + 0.5);	
+// 	
+// 	eSetPitch  = (s8)	(Ke * Pitcherror[0] + 0.5); 	//四舍五入取整	Pitch
+// 	deSetPitch = (s8)	(Kc * (Pitcherror[0] - Pitcherror[1]) + 0.5);
+
+// 	/* 判断所属模糊集 ----------------------------------------------------------*/
+// 	if(eSetRol > 6) eSetRol = 6;				//限制范围为-6~6	Rol
+// 	else if(eSetRol < -6) eSetRol = -6;
+// 	
+// 	if(deSetRol > 6) deSetRol = 6;
+// 	else if(deSetRol < -6) deSetRol = -6;
+
+// 	if(eSetPitch > 6) eSetPitch = 6;				//限制范围为-6~6	Pitch
+// 	else if(eSetPitch < -6) eSetPitch = -6;
+// 	
+// 	if(deSetPitch > 6) deSetPitch = 6;
+// 	else if(deSetPitch < -6) deSetPitch = -6;
+
+// 	/* 查表得出模糊输出 -----------------------------------*/
+// 	plusdeltuRol = 	PlusFuzCtrlArray[eSetRol+6][deSetRol+6];			//Rol
+// 	negdeluRol	 = 	NegFuzCtrlArray[eSetRol+6][deSetRol+6];
+// 	
+// 	plusdeltuPitch = 	PlusFuzCtrlArray[eSetPitch+6][deSetPitch+6];	//Pitch
+// 	negdeluPitch   = 	NegFuzCtrlArray[eSetPitch+6][deSetPitch+6];
+
+// 	/* 乘以增益系数 ---------------------------------------*/
+// 	plusdeltuRol   *= Ku;			//Rol
+// 	negdeluRol	   *= Ku;
+
+// 	plusdeltuPitch *= Ku;			//Pitch
+// 	negdeluPitch   *= Ku;
+// 	
+// 	/* 将增量加入控制 ---------------------------------------------------------*/
+// 	motor1 += (s16)plusdeltuPitch;
+// 	motor2 += (s16)negdeluRol;
+// 	motor3 += (s16)negdeluPitch;
+// 	motor4 += (s16)plusdeltuRol;
+
+// 	/*vc 根据油门控制电机 -------------------------------------------------------*/
+// 	PWM_SET(motor1,motor2,motor3,motor4);
 }	
 /**
   *@brief   

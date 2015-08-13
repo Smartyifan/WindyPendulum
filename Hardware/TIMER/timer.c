@@ -8,13 +8,15 @@
 #include "delay/delay.h"
 #include "MotionCtr/motionctr.h"
 
-//定时器3中断服务程序,每5ms进入一次定时器中断
+//定时器3中断服务程序,每20ms进入一次定时器中断
 void TIM3_IRQHandler(void)
 { 	
 	if(TIM3->SR&0X0001)//溢出中断
 	{
-		if(MontionControl.MotionMode == SinglePend || MontionControl.MotionMode == DoublePend)
-			(*MontionControl.CtrlFun)(0,0);		//单摆或双摆控制函数
+		if(DetectZeroDrift == DISABLE && DriftDetected == SUCCESS && MotorStart == ENABLE){
+			if((MontionControl.MotionMode == SinglePend || MontionControl.MotionMode == DoublePend) && MontionControl.SinglePendParam.Charged == SUCCESS)
+				(*MontionControl.CtrlFun)(0,0);		//单摆或双摆控制函数
+		}
 	}
 	TIM3->SR&=~(1<<0);		//清除中断标志位 
 }
