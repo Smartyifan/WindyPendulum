@@ -213,61 +213,70 @@ void DoublePendCtrl(float RolCule,float PitchCule){
 			float PitchCule	当前Pitch偏差
   *@retval  None
   */
-void StablePlotCtrl(float Role,float Pitche){
-	s8 plusdeltuRol   = 0,		negdeluRol   = 0;
-	s8 plusdeltuPitch = 0,		negdeluPitch = 0;
+void StablePlotCtrl(float RolSpeed,float PitchSpeed){
 	
-	static float Rolerror[2],	Pitcherror[2];
 	
-	s8 eSetRol 	 = 0,	deSetRol   = 0;
-	s8 eSetPitch = 0,	deSetPitch = 0;
-
-	/* 偏差移位 ----------------------------------------------------------------*/
-	FuzzyGetError(&Rolerror,Role);
-	FuzzyGetError(&Pitcherror,Pitche);
+	//阻尼力
+	motor1 = -750 	* 	PitchSpeed;
+	motor2 =  750  	*	RolSpeed;
+	motor3 =  750	*	PitchSpeed;
+	motor4 = -750	*	RolSpeed;
 	
-	/* 将物理论域转换为模糊论域 ------------------------------------------------*/
-	eSetRol  = 	(s8)	(Ke * Rolerror[0] + 0.5); 	//四舍五入取整		Rol
-	deSetRol =  (s8)	(Kc * (Rolerror[0] - Rolerror[1]) + 0.5);	
-	
-	eSetPitch  = (s8)	(Ke * Pitcherror[0] + 0.5); 	//四舍五入取整	Pitch
-	deSetPitch = (s8)	(Kc * (Pitcherror[0] - Pitcherror[1]) + 0.5);
-
-	/* 判断所属模糊集 ----------------------------------------------------------*/
-	if(eSetRol > 6) eSetRol = 6;				//限制范围为-6~6	Rol
-	else if(eSetRol < -6) eSetRol = -6;
-	
-	if(deSetRol > 6) deSetRol = 6;
-	else if(deSetRol < -6) deSetRol = -6;
-
-	if(eSetPitch > 6) eSetPitch = 6;				//限制范围为-6~6	Pitch
-	else if(eSetPitch < -6) eSetPitch = -6;
-	
-	if(deSetPitch > 6) deSetPitch = 6;
-	else if(deSetPitch < -6) deSetPitch = -6;
-
-	/* 查表得出模糊输出 -----------------------------------*/
-	plusdeltuRol = 	PlusFuzCtrlArray[eSetRol+6][deSetRol+6];			//Rol
-	negdeluRol	 = 	NegFuzCtrlArray[eSetRol+6][deSetRol+6];
-	
-	plusdeltuPitch = 	PlusFuzCtrlArray[eSetPitch+6][deSetPitch+6];	//Pitch
-	negdeluPitch   = 	NegFuzCtrlArray[eSetPitch+6][deSetPitch+6];
-
-	/* 乘以增益系数 ---------------------------------------*/
-	plusdeltuRol   *= Ku;			//Rol
-	negdeluRol	   *= Ku;
-
-	plusdeltuPitch *= Ku;			//Pitch
-	negdeluPitch   *= Ku;
-	
-	/* 将增量加入控制 ---------------------------------------------------------*/
-	motor1 += (s16)plusdeltuPitch;
-	motor2 += (s16)negdeluRol;
-	motor3 += (s16)negdeluPitch;
-	motor4 += (s16)plusdeltuRol;
-
-	/*vc 根据油门控制电机 -------------------------------------------------------*/
 	PWM_SET(motor1,motor2,motor3,motor4);
+// 	s8 plusdeltuRol   = 0,		negdeluRol   = 0;
+// 	s8 plusdeltuPitch = 0,		negdeluPitch = 0;
+// 	
+// 	static float Rolerror[2],	Pitcherror[2];
+// 	
+// 	s8 eSetRol 	 = 0,	deSetRol   = 0;
+// 	s8 eSetPitch = 0,	deSetPitch = 0;
+
+// 	/* 偏差移位 ----------------------------------------------------------------*/
+// 	FuzzyGetError(&Rolerror,Role);
+// 	FuzzyGetError(&Pitcherror,Pitche);
+// 	
+// 	/* 将物理论域转换为模糊论域 ------------------------------------------------*/
+// 	eSetRol  = 	(s8)	(Ke * Rolerror[0] + 0.5); 	//四舍五入取整		Rol
+// 	deSetRol =  (s8)	(Kc * (Rolerror[0] - Rolerror[1]) + 0.5);	
+// 	
+// 	eSetPitch  = (s8)	(Ke * Pitcherror[0] + 0.5); 	//四舍五入取整	Pitch
+// 	deSetPitch = (s8)	(Kc * (Pitcherror[0] - Pitcherror[1]) + 0.5);
+
+// 	/* 判断所属模糊集 ----------------------------------------------------------*/
+// 	if(eSetRol > 6) eSetRol = 6;				//限制范围为-6~6	Rol
+// 	else if(eSetRol < -6) eSetRol = -6;
+// 	
+// 	if(deSetRol > 6) deSetRol = 6;
+// 	else if(deSetRol < -6) deSetRol = -6;
+
+// 	if(eSetPitch > 6) eSetPitch = 6;				//限制范围为-6~6	Pitch
+// 	else if(eSetPitch < -6) eSetPitch = -6;
+// 	
+// 	if(deSetPitch > 6) deSetPitch = 6;
+// 	else if(deSetPitch < -6) deSetPitch = -6;
+
+// 	/* 查表得出模糊输出 -----------------------------------*/
+// 	plusdeltuRol = 	PlusFuzCtrlArray[eSetRol+6][deSetRol+6];			//Rol
+// 	negdeluRol	 = 	NegFuzCtrlArray[eSetRol+6][deSetRol+6];
+// 	
+// 	plusdeltuPitch = 	PlusFuzCtrlArray[eSetPitch+6][deSetPitch+6];	//Pitch
+// 	negdeluPitch   = 	NegFuzCtrlArray[eSetPitch+6][deSetPitch+6];
+
+// 	/* 乘以增益系数 ---------------------------------------*/
+// 	plusdeltuRol   *= Ku;			//Rol
+// 	negdeluRol	   *= Ku;
+
+// 	plusdeltuPitch *= Ku;			//Pitch
+// 	negdeluPitch   *= Ku;
+// 	
+// 	/* 将增量加入控制 ---------------------------------------------------------*/
+// 	motor1 += (s16)plusdeltuPitch;
+// 	motor2 += (s16)negdeluRol;
+// 	motor3 += (s16)negdeluPitch;
+// 	motor4 += (s16)plusdeltuRol;
+
+// 	/*vc 根据油门控制电机 -------------------------------------------------------*/
+// 	PWM_SET(motor1,motor2,motor3,motor4);
 }	
 /**
   *@brief   

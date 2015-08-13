@@ -100,7 +100,6 @@ void DetectCmd(void){
 			/* 控制类指令-------------------------------------------*/
 			case 0x51: {				//停止电机
 				Motor_Stop();
-				MontionControl.MotionMode = Stop;
 				HC05printf(&HC05," Motor_Stop\r\n");
 				break;
 			}
@@ -248,14 +247,18 @@ void Motor_Stop(void)
 	PIDParamInit(&PitchnPendPID);
 
 	//油门调整为0
-	PWM_SET(0,0,0,0);
+// 	PWM_SET(0,0,0,0);
 	
 	//充能标志清位
 	MontionControl.SinglePendParam.Charged = ERROR;
-// 	TIM4->CCR1 = 1000;		//设置占空比ZKB
-// 	TIM4->CCR2 = 1000;
-// 	TIM4->CCR3 = 1000;
-// 	TIM4->CCR4 = 1000;
+	
+	TIM4->CR1	&=	~(1<<0);        //关闭定时器4
+	TIM4->CCR1 	 = 	3000;		//设置占空比ZKB
+	TIM4->CCR2 	 = 	3000;
+	TIM4->CCR3 	 = 	3000;
+	TIM4->CCR4 	 = 	3000;
+	TIM4->CR1	|= 	0x0001;   //打开定时器4，开始输出PWM波
+
 // 	TIM4->CCER &=~(1<<0);			//使能Timer4 PWM输出禁止
 // 	TIM4->CCER &=~(1<<4);
 // 	TIM4->CCER &=~(1<<8);
