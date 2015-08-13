@@ -75,7 +75,7 @@ void MotionCtrParamInit(MotionCtrStr * MotionCtrl){
 	
 	/* 单摆模式参数初始化 -------------------------------*/
 	MotionCtrl->SinglePendParam.Angle = 0;
-	MotionCtrl->SinglePendParam.Period = 0;
+	MotionCtrl->SinglePendParam.Period = 78;
 	MotionCtrl->SinglePendParam.RolAmplitude = 0;
 	MotionCtrl->SinglePendParam.PitchAmplitude = 0;
 	
@@ -110,7 +110,7 @@ void SinglePendCtrl(float RolCule,float PitchCule){
 	
 	/* 计算驱动力 -----------------------------------------------*/
 	/* 周期2s，为固有周期，可用周期性驱动力 -----------------------------------------------*/
-	if(MontionControl.SinglePendParam.Period	==	2){
+	if(MontionControl.SinglePendParam.Period	==	78){
 		if(Tick < MontionControl.SinglePendParam.Period/2){					//RolForce
 			RolpForce = RolpPendPID.PIDout * 
 							sin(	Tick *	(_2Pi/MontionControl.SinglePendParam.Period)	);

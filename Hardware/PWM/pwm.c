@@ -15,7 +15,7 @@
 */
 void Timer4_PWM_Init(u16 arr,u16 psc)
 {
-	u16 ALLCH_CRR = 1000;		//初始占空比
+	u16 ALLCH_CRR = 3000;		//初始占空比
 	
 	RCC->APB1ENR |= 1<<2;		//TIM4
 	RCC->APB2ENR |= 1<<3;		//GPIOB
@@ -55,10 +55,10 @@ void Timer4_PWM_Init(u16 arr,u16 psc)
 
 void PWM_SET(s16 CH1_CCR,s16 CH2_CCR,s16 CH3_CCR,s16 CH4_CCR)
 {
-	if(CH1_CCR>960)CH1_CCR = 960;
-	if(CH2_CCR>960)CH2_CCR = 960;
-	if(CH3_CCR>960)CH3_CCR = 960;
-	if(CH4_CCR>960)CH4_CCR = 960;
+	if(CH1_CCR>2820)CH1_CCR = 2820;
+	if(CH2_CCR>2820)CH2_CCR = 2820;
+	if(CH3_CCR>2820)CH3_CCR = 2820;
+	if(CH4_CCR>2820)CH4_CCR = 2820;
 
 	if(CH1_CCR<=0)CH1_CCR = 0;
 	if(CH2_CCR<=0)CH2_CCR = 0;
@@ -67,10 +67,10 @@ void PWM_SET(s16 CH1_CCR,s16 CH2_CCR,s16 CH3_CCR,s16 CH4_CCR)
 
 	TIM4->CR1&=~(1<<0);        //关闭定时器4
 	
-	TIM4->CCR1 = CH1_CCR+1060;		//设置占空比ZKB
-	TIM4->CCR2 = CH2_CCR+1060;
-	TIM4->CCR3 = CH3_CCR+1060;
-	TIM4->CCR4 = CH4_CCR+1060;
+	TIM4->CCR1 = CH1_CCR+3180;		//设置占空比ZKB
+	TIM4->CCR2 = CH2_CCR+3180;
+	TIM4->CCR3 = CH3_CCR+3180;
+	TIM4->CCR4 = CH4_CCR+3180;
 	
 	TIM4->CR1|=0x0001;   //打开定时器4，开始输出PWM波
 }
@@ -78,11 +78,11 @@ void PWM_SET(s16 CH1_CCR,s16 CH2_CCR,s16 CH3_CCR,s16 CH4_CCR)
 
 void Motor_Init(void)
 {
-	Timer4_PWM_Init(20000,72); 		//电调控制频率50Hz
-	TIM4->CCR1 = 1000;				//设置占空比ZKB
-	TIM4->CCR2 = 1000;
-	TIM4->CCR3 = 1000;
-	TIM4->CCR4 = 1000;
+	Timer4_PWM_Init(60000,24); 		//电调控制频率50Hz
+	TIM4->CCR1 = 3000;				//设置占空比ZKB
+	TIM4->CCR2 = 3000;
+	TIM4->CCR3 = 3000;
+	TIM4->CCR4 = 3000;
 }
 
 

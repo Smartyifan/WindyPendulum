@@ -33,6 +33,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
+s16 Amp2ZKB(float a){return (s16)(-0.048*a*a +2.6119*a+39.2796);}
 /* Private functions ---------------------------------------------------------*/
 /**
   *@brief   Initial
@@ -116,16 +117,6 @@ void DetectCmd(void){
 				HC05printf(&HC05," SinglePend Mode...\r\n");
 				break;
 			}
-// 			case 0x55:{					//单摆Rol模式
-// 				MontionControl.SinglePendParam.Pend = Rol;
-// 				HC05printf(&HC05," SinglePend Mode in Rol...\r\n");
-// 				break;
-// 			} 
-// 			case 0x56:{					//单摆Pitch模式
-// 				MontionControl.SinglePendParam.Pend = Pitch;
-// 				HC05printf(&HC05," SinglePend Mode in Pitch...\r\n");
-// 				break;
-// 			}
 			case 0x57:{					//双摆模式
 				MontionControl.MotionMode = DoublePend;
 				MontionControl.CtrlFun = DoublePendCtrl;
@@ -160,6 +151,9 @@ void DetectCmd(void){
 																					cos(MontionControl.SinglePendParam.Angle);
 				MontionControl.SinglePendParam.PitchAmplitude =	MontionControl.SinglePendParam.Amplitude	*	
 																					sin(MontionControl.SinglePendParam.Angle);
+				
+				MontionControl.SinglePendParam.RolPendForce	 	= 	Amp2ZKB(MontionControl.SinglePendParam.RolAmplitude);
+				MontionControl.SinglePendParam.PitchPendForce 	= 	Amp2ZKB(MontionControl.SinglePendParam.PitchAmplitude);
 				HC05printf(&HC05," Amplitude = %f\r\n",temp.f);
 				break;
 			}
@@ -170,6 +164,10 @@ void DetectCmd(void){
 																					cos(MontionControl.SinglePendParam.Angle);
 				MontionControl.SinglePendParam.PitchAmplitude =	MontionControl.SinglePendParam.Amplitude	*	
 																					sin(MontionControl.SinglePendParam.Angle);
+				
+				MontionControl.SinglePendParam.RolPendForce 	= 	Amp2ZKB(MontionControl.SinglePendParam.RolAmplitude);
+				MontionControl.SinglePendParam.PitchPendForce 	= 	Amp2ZKB(MontionControl.SinglePendParam.PitchAmplitude);
+
 				HC05printf(&HC05," Angle = %f\r\n",MontionControl.SinglePendParam.Angle);
 				break;
 			}

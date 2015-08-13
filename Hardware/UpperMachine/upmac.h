@@ -21,7 +21,8 @@
 /* TypeDefine ----------------------------------------------------------------*/
 
 /* extern Variables ----------------------------------------------------------*/
-
+/* inline function -----------------------------------------------------------*/
+inline s16 Amp2ZKB(float a);
 /* extern function------------------------------------------------------------*/
 extern void SimplePlotSend(HC05Str * HC05,float A,float B,float C,float D);	 	//在XJI上位机中画图
 extern void Motor_Start_Up(void);			//启动电机

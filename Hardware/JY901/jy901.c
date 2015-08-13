@@ -115,7 +115,7 @@ u16 i=0;
 void DMA1_Channel6_IRQHandler(void){
    
 	static float RolZeroDirftAll=0,PitchZeroDirftAll=0;//零漂累计变量	
-	static float amplitude;		//调试参数，可删除
+	static float amplitudeP,amplitudeN;		//调试参数，可删除
 	
 	if(DMA_GetITStatus(DMA1_IT_TC6) == SET){	
 
@@ -193,38 +193,68 @@ void DMA1_Channel6_IRQHandler(void){
 				if(JY901.Rol[1] > 0){										//Rol
 					if(JY901.dRol[0]<=0	&&	JY901.dRol[1]>=0){
 						
-						amplitude = JY901.Rol[1];						//查看幅度
 						
 						MontionControl.eRolp_Amplitude[1] = MontionControl.eRolp_Amplitude[0];
 						MontionControl.eRolp_Amplitude[0] = MontionControl.SinglePendParam.RolAmplitude - JY901.Rol[1];		//Rol正摆幅
-						
-						RolpPendPID.PIDout += RolpPendPID.Kp * (MontionControl.eRolp_Amplitude[0])
-												+RolpPendPID.Kd * (MontionControl.eRolp_Amplitude[0] - MontionControl.eRolp_Amplitude[1]);		//Rol
+						if(MontionControl.eRolp_Amplitude[0] > 0.1){
+							
+							RolpPendPID.Iout += RolpPendPID.Ki *  MontionControl.eRolp_Amplitude[0];
+							RolpPendPID.PIDout = MontionControl.SinglePendParam.RolPendForce
+													+ RolpPendPID.Kp * (MontionControl.eRolp_Amplitude[0])
+													+ RolpPendPID.Iout
+													+ RolpPendPID.Kd * (MontionControl.eRolp_Amplitude[0] - MontionControl.eRolp_Amplitude[1]);		//Rol
+						}
 					}
 				}else if(JY901.Rol[1] < 0){
 					if(JY901.dRol[0]>=0	&&	JY901.dRol[1]<=0){  
 						MontionControl.eRoln_Amplitude[1] = MontionControl.eRoln_Amplitude[0];
 						MontionControl.eRoln_Amplitude[0] = MontionControl.SinglePendParam.RolAmplitude + JY901.Rol[1];		//Rol负摆幅
 						
-						RolnPendPID.PIDout += RolnPendPID.Kp * 	(MontionControl.eRoln_Amplitude[0])
-												+ RolnPendPID.Kd * (MontionControl.eRoln_Amplitude[0] - MontionControl.eRoln_Amplitude[1]);
+						if(MontionControl.eRoln_Amplitude[0] > 0.1){
+							
+							RolnPendPID.Iout  += RolnPendPID.Ki * MontionControl.eRoln_Amplitude[0];
+							RolnPendPID.PIDout = MontionControl.SinglePendParam.RolPendForce
+													+ RolnPendPID.Kp * 	(MontionControl.eRoln_Amplitude[0])
+													+ RolnPendPID.Iout
+													+ RolnPendPID.Kd * (MontionControl.eRoln_Amplitude[0] - MontionControl.eRoln_Amplitude[1]);
+						}
 					}
 				}
+				
 				if(JY901.Pitch[1] > 0){										//Pitch
 					if(JY901.dPitch[0]<=0   &&   JY901.dPitch[1]>=0){
+					
+						amplitudeP = JY901.Pitch[1];						//查看幅度
+
 						MontionControl.ePitchp_Amplitude[1] = MontionControl.ePitchp_Amplitude[0];
 						MontionControl.ePitchp_Amplitude[0] = MontionControl.SinglePendParam.PitchAmplitude - JY901.Pitch[1];	//Pitch正摆幅
 						
-						PitchpPendPID.PIDout += PitchpPendPID.Kp * (MontionControl.ePitchp_Amplitude[0])
-												+PitchpPendPID.Kd * (MontionControl.ePitchp_Amplitude[0] - MontionControl.ePitchp_Amplitude[1]);	//Pitch
+						if(MontionControl.ePitchp_Amplitude[0] > 0.1){
+							
+							PitchpPendPID.Iout  += PitchpPendPID.Ki * MontionControl.ePitchp_Amplitude[0];
+							PitchpPendPID.PIDout = MontionControl.SinglePendParam.PitchPendForce 
+													+ PitchpPendPID.Kp * (MontionControl.ePitchp_Amplitude[0])
+													+ PitchpPendPID.Iout
+													+ PitchpPendPID.Kd * (MontionControl.ePitchp_Amplitude[0] - MontionControl.ePitchp_Amplitude[1]);	//Pitch
+						}
+						
 					} 
 				}else if(JY901.Pitch[1] < 0){
 					if(JY901.dPitch[0]>=0   &&	JY901.dPitch[1]<=0){
+						
+						amplitudeN = JY901.Pitch[1];						//查看幅度
+
 						MontionControl.ePitchn_Amplitude[1] = MontionControl.ePitchn_Amplitude[0];
 						MontionControl.ePitchn_Amplitude[0] = MontionControl.SinglePendParam.PitchAmplitude + JY901.Pitch[1];	//Pitch负摆幅
 						
-						PitchnPendPID.PIDout += PitchnPendPID.Kp * (MontionControl.ePitchn_Amplitude[0])
-												+PitchnPendPID.Kd * (MontionControl.ePitchn_Amplitude[0] - MontionControl.ePitchn_Amplitude[1]);
+						if(MontionControl.ePitchn_Amplitude[0] > 0.1){
+
+							PitchnPendPID.Iout  += PitchnPendPID.Ki * MontionControl.ePitchn_Amplitude[0];
+							PitchnPendPID.PIDout = MontionControl.SinglePendParam.PitchPendForce 
+													+ PitchnPendPID.Kp * (MontionControl.ePitchn_Amplitude[0])
+													+ PitchnPendPID.Iout
+													+ PitchnPendPID.Kd * (MontionControl.ePitchn_Amplitude[0] - MontionControl.ePitchn_Amplitude[1]);
+						}
 					}
 				}
 				
@@ -235,7 +265,7 @@ void DMA1_Channel6_IRQHandler(void){
 			}
 			
 			/* 在XJI上位机画出数据图形 ----------------------------------------------------*/
-			SimplePlotSend(&HC05,JY901.AngCuled.RolCuled-JY901.ZeroDirft.RolZeroDirft,amplitude,0,0);		//执行时间 7.92us ≈ 8us
+			SimplePlotSend(&HC05,JY901.AngCuled.PitchCuled-JY901.ZeroDirft.PitchZeroDirft,amplitudeP,amplitudeN,0);		//执行时间 7.92us ≈ 8us
 			
 		}
 		/* 后续处理 ----------------------------------------------------------------------*/
